@@ -2,8 +2,6 @@ package edu.upc.epsevg.prop.oust;
 
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
-//import edu.upc.epsevg.prop.oust.players.H_E_X_Player;
-
 
 
 import javax.swing.SwingUtilities;
@@ -17,7 +15,7 @@ public class Game {
      * @param args no usats
      */
     public static void main(String[] args) { 
-        
+         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -34,20 +32,20 @@ public class Game {
                 // Deixem el tontet en mans d'una mala persona
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("Asterix");
-                IPlayer player1 = new MalaOustiaPlayer();
+                //IPlayer player2 = new MalaOustiaPlayer();
                 
                 
                 //---------------------------------------------
                 // Enjoy!
                 //---------------------------------------------
-                //IPlayer player1 = new RandomPlayer("Obelix");
+                IPlayer player1 = new RandomPlayer("Obelix");
                 IPlayer player2 = new HumanPlayer("Human2");
                                 
                 
                 //---------------------------------------------
                 // Customitzeu els paràmetres
                 //---------------------------------------------
-                int midaCostat = 7;
+                int midaCostat = 5;
                 int timeoutEnSegons = 3;
                 boolean pauseEnAutomatic = false;
                 

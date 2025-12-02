@@ -4,7 +4,6 @@ package edu.upc.epsevg.prop.oust.players;
 import edu.upc.epsevg.prop.oust.GameStatus;
 import edu.upc.epsevg.prop.oust.IAuto;
 import edu.upc.epsevg.prop.oust.IPlayer;
-import edu.upc.epsevg.prop.oust.MoveNode;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import edu.upc.epsevg.prop.oust.SearchType;
@@ -29,6 +28,7 @@ public class RandomPlayer implements IPlayer, IAuto {
     @Override
     public void timeout() {
         // Nothing to do! I'm so fast, I never timeout 8-)
+        
     }
 
     /**
@@ -44,7 +44,8 @@ public class RandomPlayer implements IPlayer, IAuto {
         
         List<Point> path = new ArrayList<>();
         PlayerType currentPlayer = s1.getCurrentPlayer();
-        GameStatus aux = new GameStatus(s1);;
+        GameStatus aux = new GameStatus(s1);
+        
         do {
             
             List<Point> moves = aux.getMoves();
