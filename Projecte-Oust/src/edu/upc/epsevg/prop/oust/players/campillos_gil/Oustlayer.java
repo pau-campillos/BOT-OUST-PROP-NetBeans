@@ -6,6 +6,10 @@ import edu.upc.epsevg.prop.oust.IAuto;
 import edu.upc.epsevg.prop.oust.GameStatus;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
+import edu.upc.epsevg.prop.oust.SearchType;
+import static edu.upc.epsevg.prop.oust.SearchType.MINIMAX;
+import java.awt.Point;
+import java.util.List;
 
 /**
  * Jugador proposat amb MiniMax
@@ -38,49 +42,44 @@ public class Oustlayer implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s1) {
-        PlayerType player = s1.getCurrentPlayer(); //No va aqui, va abans de fer la tirada del max i del min
+        //PlayerType player = s1.getCurrentPlayer(); //No va aqui, va abans de fer la tirada del max i del min
         //Despres de la tirada, torno a fer current player. Si es el mateix, he matat.
         //Si no es el mateix, passo de max a min o al revés (la tirada no ha matat a ningú i li toca al altre jugador)
         
-        int tirada = triaMillorMoviment(s1, player, 0);
-        return null;
+        PlayerMove move = triaMillorMoviment(s1, 0);
+        return move;
     }
-    
-    private int triaMillorMoviment(GameStatus t, PlayerType player, int depth)
+
+    private PlayerMove triaMillorMoviment(GameStatus t, int depth)
     {
-        int millorMoviment = -1;
+        List<Point> movRealitzats = new List<Point>();//NO SE COMMMMMMMMMMMMMM
+        long numNodesExplorats = 0;
+        int maxDepth = 0;
+        SearchType tipusCerca=  MINIMAX;
+        PlayerMove millorMoviment = new PlayerMove(movRealitzats, numNodesExplorats, maxDepth, tipusCerca);
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
 
-        int contador = 0;
-
-        for (int columna = 0; t.espotmoure() && columna < t.getMida(); columna++) {
-            if (!t.movpossible(columna)) continue;
-
-            if (contador < 2 && t.getColor(0,columna) != 0){
-              if (t.getColor(1, columna) != 0) contador+=2;
-              else contador++; 
-            }
+        // no podem mirar si el moviment es possible però tenim getMOves que ens retorna els moviments possibles
+        List<Point> tiradesPossibles = t.getMoves();
+        for (int i = 0; i<tiradesPossibles.size(); i++){
             
-            Tauler s = new Tauler(t);
-            s.afegeix(columna, color);
+            PlayerType player = t.getCurrentPlayer();
 
-            int iniJugador = color;
+            GameStatus t_nou = new GameStatus(t);
 
-            int candidat = Min_Valor(s, -color, columna, depth-1, iniJugador, alpha, beta);
+            t_nou.placeStone(tiradesPossibles[i]);
+
+            int candidat = Min_Valor(t_nou, depth-1, alpha, beta);
             if(candidat > valor){
                 valor = candidat;
-                millorMoviment = columna;
+                millorMoviment = tiradesPossibles[i];
             }
             
             if (usaPoda) {
                 alpha = Math.max(alpha, valor);
             }
-        }
-
-        if (contador < 2){
-          jugadesFinalsTotals = jugadesFinalsEnCadaTorn;
         }
 
         if (millorMoviment == -1) {
@@ -95,11 +94,11 @@ public class Oustlayer implements IPlayer, IAuto {
     }
 
     
-    private int Min_Valor(Tauler t, PlayerType player, int col, int depth, int iniJugador, int alpha, int beta){
+    private int Min_Valor(Tauler t, int depth, int alpha, int beta){
         // Avaluació d'estats terminals: Victòria/Derrota o profunditat màxima
         if (t.solucio(col, -color)) return Integer.MAX_VALUE; // MAX va guanyar l'últim moviment (derrota del MIN actual)
         else if (!t.espotmoure()) return 0; // Tauler ple (empat)
-        else if (depth == 0) return valorarEstat(t, iniJugador); // Avaluació heurística
+        else if (depth == 0) return valorarEstat(t); // Avaluació heurística
 
         int valor = Integer.MAX_VALUE;
 
@@ -109,7 +108,7 @@ public class Oustlayer implements IPlayer, IAuto {
             Tauler s = new Tauler(t);
             s.afegeix(columna, color);
 
-            valor = Math.min(valor, Max_Valor(s, -color, columna, depth-1, iniJugador, alpha, beta));
+            valor = Math.min(valor, Max_Valor(s, depth-1, alpha, beta));
 
             // Poda Alpha: Si el valor MIN és més petit o igual que alpha, la branca es poda.
             if(usaPoda && valor <= alpha){
@@ -121,11 +120,11 @@ public class Oustlayer implements IPlayer, IAuto {
         return valor;
     }
 
-    private int Max_Valor(Tauler t, PlayerType player, int col, int depth, int iniJugador, int alpha, int beta){
+    private int Max_Valor(Tauler t, int depth, int alpha, int beta){
         // Avaluació d'estats terminals: Victòria/Derrota o profunditat màxima
         if (t.solucio(col, -color)) return Integer.MIN_VALUE; // MIN va guanyar l'últim moviment (derrota del MAX actual)
         else if (!t.espotmoure()) return 0; // Tauler ple (empat)
-        else if (depth == 0) return valorarEstat(t, iniJugador); // Avaluació heurística
+        else if (depth == 0) return valorarEstat(t); // Avaluació heurística
 
         int valor = Integer.MIN_VALUE;
         for (int columna = 0; columna < t.getMida(); columna++) {
@@ -134,7 +133,7 @@ public class Oustlayer implements IPlayer, IAuto {
             Tauler s = new Tauler(t);
             s.afegeix(columna, color);
 
-            valor = Math.max(valor, Min_Valor(s, -color, columna, depth-1, iniJugador, alpha, beta));
+            valor = Math.max(valor, Min_Valor(s, depth-1, alpha, beta));
 
             // Poda Beta: Si el valor MAX és més gran o igual que beta, la branca es poda.
             if(usaPoda && beta <= valor){
@@ -145,11 +144,9 @@ public class Oustlayer implements IPlayer, IAuto {
         return valor;
     }
    
-    private int valorarEstat(Tauler t, int iniJugador){
+    private int valorarEstat(Tauler t){
         int h = 0;
-        jugadesFinalsTotals++;
-        jugadesFinalsEnCadaTorn++;
-        if(usaHeur) h = evaluarEstat(t, iniJugador);
+        if(usaHeur) h = evaluarEstat(t);
         return h;
     }
     /**
