@@ -2,7 +2,7 @@ package edu.upc.epsevg.prop.oust.players.campillos_gil;
 
 import edu.upc.epsevg.prop.oust.IPlayer;
 import edu.upc.epsevg.prop.oust.IAuto;
-//import edu.upc.epsevg.prop.oust.Game;
+import edu.upc.epsevg.prop.oust.Game;
 import edu.upc.epsevg.prop.oust.GameStatus;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
