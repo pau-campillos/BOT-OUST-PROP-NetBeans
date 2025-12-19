@@ -19,7 +19,7 @@ import java.util.Random;
 public class RandomPlayer implements IPlayer, IAuto {
 
     private String name;
-    
+    private boolean timeout = false;
 
     public RandomPlayer(String name) {
         this.name = name;
@@ -27,8 +27,7 @@ public class RandomPlayer implements IPlayer, IAuto {
 
     @Override
     public void timeout() {
-        // Nothing to do! I'm so fast, I never timeout 8-)
-        
+        timeout = true;        
     }
 
     /**

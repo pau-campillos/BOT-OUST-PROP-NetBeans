@@ -30,14 +30,14 @@ public class HeadlessGame {
 
 
         IPlayer player1 = new MalaOustiaPlayer();        
-        IPlayer player2 = new RandomPlayer("Obelix");
+        IPlayer player2 = new MOustValuablePlayer();
         
         
-        HeadlessGame game1 = new HeadlessGame(player1, player2, 7, 3/*s timeout*/, 10/*games*/);
+        HeadlessGame game1 = new HeadlessGame(player1, player2, 7, 3/*s timeout*/, 5/*games*/);
         GameResult gr1 = game1.start();
         System.out.println(gr1);
         
-        HeadlessGame game2 = new HeadlessGame(player2, player1, 7, 3/*s timeout*/, 10/*games*/);
+        HeadlessGame game2 = new HeadlessGame(player2, player1, 7, 3/*s timeout*/, 5/*games*/);
         GameResult gr2 = game2.start();       
         System.out.println(gr2);
 
@@ -73,7 +73,7 @@ public class HeadlessGame {
 
             final Semaphore semaphore = new Semaphore(1);
             semaphore.tryAcquire();
-            //System.out.println("." + new Date());
+
             final Result r = new Result();
             final PlayerType cp = status.getCurrentPlayer();
             Thread t1 = new Thread(() -> {
@@ -103,6 +103,7 @@ public class HeadlessGame {
                     status.forceLoser(cp);
                 }
                 System.out.print(cp==PlayerType.PLAYER1?"1":"2");
+                System.out.print( "["+status.diff()+"] " );
                 r.ok = true;
                 semaphore.release();
             });

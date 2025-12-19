@@ -2,10 +2,7 @@ package edu.upc.epsevg.prop.oust;
 
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
-//import edu.upc.epsevg.prop.oust.players.H_E_X_Player;
 
-import edu.upc.epsevg.prop.oust.players.campillos_gil.Oustlayer;
-import javax.swing.SwingUtilities;
 
 import javax.swing.SwingUtilities;
 
@@ -36,21 +33,22 @@ public class Game {
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("Asterix");
                 //IPlayer player2 = new MalaOustiaPlayer();
-                IPlayer player1 = new Oustlayer("Pau");
                 
                 
                 //---------------------------------------------
                 // Enjoy!
                 //---------------------------------------------
-                //IPlayer player1 = new MOustValuablePlayer();
+                //IPlayer player1 = new RandomPlayer("");
+                IPlayer player1 = new MOustValuablePlayer();
                 IPlayer player2 = new HumanPlayer("Human2");
+                
                                 
                 
                 //---------------------------------------------
                 // Customitzeu els paràmetres
                 //---------------------------------------------
-                int midaCostat = 5;
-                int timeoutEnSegons = 3;
+                int midaCostat = 7;
+                int timeoutEnSegons = 5;
                 boolean pauseEnAutomatic = false;
                 
                 new Board(player1 , player2, midaCostat /*mida*/,  timeoutEnSegons/*s timeout*/, pauseEnAutomatic);

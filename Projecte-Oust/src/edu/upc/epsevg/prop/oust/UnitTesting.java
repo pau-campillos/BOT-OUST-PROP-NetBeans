@@ -19,6 +19,8 @@ public class UnitTesting {
         GameStatus gs = new GameStatus(4);
         System.out.println(""+gs);
         
+ 
+        
         gs.placeStone(new Point(1,2));System.out.println(""+gs);
         gs.placeStone(new Point(5,3));System.out.println(""+gs);
         gs.placeStone(new Point(4,2));System.out.println(""+gs);
