@@ -18,10 +18,9 @@ import java.util.List;
  */
 public class Oustlayer implements IPlayer, IAuto {
     
-    String name;
-
-    public Oustlayer(String name) {
-        this.name = name;
+    int profunditat;
+    public Oustlayer(int prof) {
+        this.profunditat = prof;
     }
 
     /**
@@ -47,13 +46,13 @@ public class Oustlayer implements IPlayer, IAuto {
         //Despres de la tirada, torno a fer current player. Si es el mateix, he matat.
         //Si no es el mateix, passo de max a min o al revés (la tirada no ha matat a ningú i li toca al altre jugador)
         
-        PlayerMove move = triaMillorMoviment(s1, 6);
+        PlayerMove move = triaMillorMoviment(s1, profunditat);
         return move;
     }
 
     private PlayerMove triaMillorMoviment(GameStatus t, int depth)
     {
-        List<Point> movRealitzats = new ArrayList<>();//NO SE COMMMMMMMMMMMMMM
+        List<Point> movRealitzats = new ArrayList<>();
         long numNodesExplorats = 0;
         int maxDepth = 0;
         SearchType tipusCerca = MINIMAX;
