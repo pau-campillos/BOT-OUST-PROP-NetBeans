@@ -2,6 +2,7 @@ package edu.upc.epsevg.prop.oust;
 
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
+import edu.upc.epsevg.prop.oust.players.campillos_gil.Oustlayer;
 
 
 import javax.swing.SwingUtilities;
@@ -40,7 +41,8 @@ public class Game {
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("");
                 IPlayer player1 = new MOustValuablePlayer();
-                IPlayer player2 = new HumanPlayer("Human2");
+                //IPlayer player2 = new HumanPlayer("Human2");
+                IPlayer player2 = new Oustlayer(3);
                 
                                 
                 

@@ -65,11 +65,11 @@ public class Oustlayer implements IPlayer, IAuto {
 
         // no podem mirar si el moviment es possible però tenim getMOves que ens retorna els moviments possibles
         List<Point> tiradesPossibles = t.getMoves();
-        
+
         for (int i = 0; i<tiradesPossibles.size(); i++){
 
             GameStatus t_nou = new GameStatus(t);
-
+            
             t_nou.placeStone(tiradesPossibles.get(i));
             
             List<Point> LlistaMov = new ArrayList<>();//NO SE COMMMMMMMMMMMMMM
@@ -80,8 +80,8 @@ public class Oustlayer implements IPlayer, IAuto {
             PlayerType playerActual = t.getCurrentPlayer();
 
             int candidat;
-            if (player == playerActual) candidat = Min_Valor(t_nou, moviments, depth-1, alpha, beta);
-            else candidat = Max_Valor(t_nou, moviments, depth-1, alpha, beta);
+            if (player == playerActual) candidat = Max_Valor(t_nou, moviments, depth-1, alpha, beta);
+            else candidat = Min_Valor(t_nou, moviments, depth-1, alpha, beta);
             
             if (candidat >= valor){
                 valor = candidat;
@@ -116,6 +116,10 @@ public class Oustlayer implements IPlayer, IAuto {
 
             PlayerType playerActual = t_nou.getCurrentPlayer();
 
+            if (depth == 0){
+                moviments.LlistaMovements.add(tiradesPossibles.get(i));
+            }
+            
             if (player == playerActual) valor = Math.min(valor, Min_Valor(t_nou, moviments, depth, alpha, beta));
             else valor = Math.min(valor, Max_Valor(t_nou, moviments, depth-1, alpha, beta));
 
@@ -168,7 +172,7 @@ public class Oustlayer implements IPlayer, IAuto {
      */
     @Override
     public String getName() {
-        return "Oustlayer(" + name + ")";
+        return "Oustlayer(" + "MiniMaxPlayer" + ")";
     }
 
 }
