@@ -19,8 +19,16 @@ import java.util.List;
 public class Oustlayer implements IPlayer, IAuto {
     
     int profunditat;
+    PlayerMove moviment;
+    
     public Oustlayer(int prof) {
         this.profunditat = prof;
+
+        List<Point> millorTirada = new ArrayList<>();
+        long numNodesExplorats = 0;
+        int maxDepth = prof;
+        SearchType tipusCerca = MINIMAX;
+        this.moviment = new PlayerMove(millorTirada, numNodesExplorats, maxDepth, tipusCerca);
     }
 
     /**
@@ -49,117 +57,139 @@ public class Oustlayer implements IPlayer, IAuto {
         PlayerMove move = triaMillorMoviment(s1, profunditat);
         return move;
     }
-
+    
     private PlayerMove triaMillorMoviment(GameStatus t, int depth)
     {
-        List<Point> movRealitzats = new ArrayList<>();
-        long numNodesExplorats = 0;
-        int maxDepth = 0;
-        SearchType tipusCerca = MINIMAX;
-        PlayerMove millorMoviment = new PlayerMove(movRealitzats, numNodesExplorats, maxDepth, tipusCerca);
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
 
         PlayerType player = t.getCurrentPlayer(); 
-
-        // no podem mirar si el moviment es possible però tenim getMOves que ens retorna els moviments possibles
+        // Esta lista guardará la solución final completa
+        List<Point> millorSecuencia = new ArrayList<>();
+        
         List<Point> tiradesPossibles = t.getMoves();
 
-        for (int i = 0; i<tiradesPossibles.size(); i++){
-
+        for (int i = 0; i < tiradesPossibles.size(); i++){
+            Point p = tiradesPossibles.get(i);
             GameStatus t_nou = new GameStatus(t);
+            t_nou.placeStone(p);
             
-            t_nou.placeStone(tiradesPossibles.get(i));
+            // Creamos un contenedor vacio para que la recursión nos lo rellene
+            PlayerMove childMove = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
             
-            List<Point> LlistaMov = new ArrayList<>();//NO SE COMMMMMMMMMMMMMM
-            long NodesExpl = 0;
-            int Depth = 0;
-            PlayerMove moviments = new PlayerMove(LlistaMov, NodesExpl, Depth, millorMoviment.getSearchType());
-
-            PlayerType playerActual = t.getCurrentPlayer();
-
             int candidat;
-            if (player == playerActual) candidat = Max_Valor(t_nou, moviments, depth-1, alpha, beta);
-            else candidat = Min_Valor(t_nou, moviments, depth-1, alpha, beta);
+            // Lógica de captura: Si sigo siendo yo, llamo a Max
+            if (t_nou.getCurrentPlayer() == player) candidat = Max_Valor(t_nou, childMove, depth, alpha, beta);
+            else candidat = Min_Valor(t_nou, childMove, depth-1, alpha, beta);
             
-            if (candidat >= valor){
+            if (candidat > valor){ // IMPORTANTE: Usar > en lugar de >= para evitar sesgo al final
                 valor = candidat;
-                millorMoviment = moviments;
+                millorSecuencia.clear();
+                millorSecuencia.add(p); // Añadimos mi piedra
+                
+                // Si era una captura (mismo jugador), pegamos la secuencia del hijo
+                if (t_nou.getCurrentPlayer() == player) {
+                    millorSecuencia.addAll(childMove.getPoints());
+                }
             }
-             
+            
             alpha = Math.max(alpha, valor);
         }
-        /*
-        if (millorMoviment.getPoints().size() == 0) {
-            for(int i = 0; i<t.getMoves.size(); i++){
-                millorMoviment = ; // Podemos intentar devolver, con 1 movimiento, el de mayor heuristica, aunque acabemos perdioendo igual
-                break;
-            }
-        } */
-        return millorMoviment;
-    }
-
-    private int Min_Valor(GameStatus t, PlayerMove moviments, int depth, int alpha, int beta){
-        // Avaluació d'estats terminals: Victòria/Derrota o profunditat màxima
-        if (t.isGameOver()) return Integer.MAX_VALUE; // MAX va guanyar l'últim moviment (derrota del MIN actual)
-        else if (t.getMoves().size()==0) return 0; // Tauler ple (empat)
-        else if (depth == 0) return valorarEstat(t); // Avaluació heurística
-
-        int valor = Integer.MAX_VALUE;
-        PlayerType player = t.getCurrentPlayer();
-        List<Point> tiradesPossibles = t.getMoves();
-        for (int i = 0; i<tiradesPossibles.size(); i++) {
-            
-            GameStatus t_nou = new GameStatus(t);
-            t_nou.placeStone(tiradesPossibles.get(i));
-
-            PlayerType playerActual = t_nou.getCurrentPlayer();
-
-            if (depth == 0){
-                moviments.LlistaMovements.add(tiradesPossibles.get(i));
-            }
-            
-            if (player == playerActual) valor = Math.min(valor, Min_Valor(t_nou, moviments, depth, alpha, beta));
-            else valor = Math.min(valor, Max_Valor(t_nou, moviments, depth-1, alpha, beta));
-
-            // Poda Alpha: Si el valor MIN és més petit o igual que alpha, la branca es poda.
-            if(valor <= alpha){
-                return valor;
-            }
-            beta = Math.min(beta, valor);
-        }
-        return valor;
+        
+        // Devolvemos la secuencia completa construida
+        return new PlayerMove(millorSecuencia, 0, depth, MINIMAX);
     }
 
     private int Max_Valor(GameStatus t, PlayerMove moviments, int depth, int alpha, int beta){
-        // Avaluació d'estats terminals: Victòria/Derrota o profunditat màxima
-        if (t.isGameOver()) return Integer.MIN_VALUE; // MIN va guanyar l'últim moviment (derrota del MAX actual)
-        else if (t.getMoves().size()==0) return 0; // Tauler ple (empat)
-        else if (depth == 0) return valorarEstat(t); // Avaluació heurística
+        if (t.isGameOver()){
+            PlayerType winner = t.GetWinner();
+            if (winner == t.getCurrentPlayer()) {
+                return Integer.MAX_VALUE; // MAX va guanyar l'últim moviment (victòria del MAX actual)
+            } else {
+                return Integer.MIN_VALUE; // MIN va guanyar l'últim moviment (derrota del MAX actual)
+            }
+        }
+        else if (t.getMoves().isEmpty()) return 0;
+        else if (depth == 0) return valorarEstat(t);
 
         int valor = Integer.MIN_VALUE;
-        PlayerType player = t.getCurrentPlayer();
         List<Point> tiradesPossibles = t.getMoves();
-        for (int i = 0; i<tiradesPossibles.size(); i++) {
-
+        
+        // No necesitamos copiar 'moviments' aquí, solo rellenarlo si encontramos algo mejor
+        
+        for (int i = 0; i < tiradesPossibles.size(); i++) {
+            Point p = tiradesPossibles.get(i);
             GameStatus t_nou = new GameStatus(t);
-            t_nou.placeStone(tiradesPossibles.get(i));
+            t_nou.placeStone(p);
+            
+            // Contenedor para la siguiente recursión
+            PlayerMove nextMoveContainer = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
+            int valHijo;
 
-            PlayerType playerActual = t_nou.getCurrentPlayer();
-
-            if (player == playerActual)  valor = Math.max(valor, Max_Valor(t_nou, moviments, depth, alpha, beta));
-            else valor = Math.max(valor, Min_Valor(t_nou, moviments, depth-1, alpha, beta));
-           
-            // Poda Beta: Si el valor MAX és més gran o igual que beta, la branca es poda.
-            if(beta <= valor){
-                return valor;
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) valHijo = Max_Valor(t_nou, nextMoveContainer, depth, alpha, beta);
+            else valHijo = Min_Valor(t_nou, nextMoveContainer, depth-1, alpha, beta);
+            
+            if (valHijo > valor) {
+                valor = valHijo;
+                
+                // AQUÍ ESTÁ LA SOLUCIÓN:
+                // Actualizamos el objeto 'moviments' del padre con la mejor jugada encontrada aquí
+                moviments.getPoints().clear();
+                moviments.getPoints().add(p);
+                
+                // Si ha sido captura, añadimos lo que nos ha devuelto el hijo
+                if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) moviments.getPoints().addAll(nextMoveContainer.getPoints());
             }
+            
             alpha = Math.max(alpha, valor);
+            if (beta <= alpha) break;
         }
         return valor;
     }
-   
+
+    private int Min_Valor(GameStatus t, PlayerMove moviments, int depth, int alpha, int beta){
+        if (t.isGameOver()){
+            PlayerType winner = t.GetWinner();
+            if (winner == t.getCurrentPlayer()) {
+                return Integer.MIN_VALUE; // MAX va guanyar l'últim moviment (victòria del MIN actual)
+            } else {
+                return Integer.MAX_VALUE; // MIN va guanyar l'últim moviment (derrota del MAX actual)
+            }
+        }
+        else if (t.getMoves().isEmpty()) return 0; 
+        else if (depth == 0) return valorarEstat(t);
+
+        int valor = Integer.MAX_VALUE;
+        List<Point> tiradesPossibles = t.getMoves();
+        
+        for (int i = 0; i < tiradesPossibles.size(); i++) {
+            Point p = tiradesPossibles.get(i);
+            GameStatus t_nou = new GameStatus(t);
+            t_nou.placeStone(p);
+            
+            PlayerMove nextMoveContainer = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
+            int valHijo;
+            
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) valHijo = Min_Valor(t_nou, nextMoveContainer, depth, alpha, beta);
+            else valHijo = Max_Valor(t_nou, nextMoveContainer, depth-1, alpha, beta);
+
+            if (valHijo < valor){
+                valor = valHijo;
+                // Para MIN no es crítico guardar la jugada, pero mantenemos la lógica por seguridad
+                moviments.getPoints().clear();
+                moviments.getPoints().add(p);
+                if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) {
+                    moviments.getPoints().addAll(nextMoveContainer.getPoints());
+                }
+            }
+            
+            beta = Math.min(beta, valor);
+            if (beta <= alpha) break;
+        }
+        return valor;
+    }
+
     private int valorarEstat(GameStatus t){
         int h = 0;
         //h = evaluarEstat(t);

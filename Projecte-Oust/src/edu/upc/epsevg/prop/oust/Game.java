@@ -40,9 +40,9 @@ public class Game {
                 // Enjoy!
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("");
-                IPlayer player1 = new MOustValuablePlayer();
-                //IPlayer player2 = new HumanPlayer("Human2");
-                IPlayer player2 = new Oustlayer(3);
+                //IPlayer player1 = new MOustValuablePlayer();
+                IPlayer player2 = new HumanPlayer("Human2");
+                IPlayer player1 = new Oustlayer(4);
                 
                                 
                 
