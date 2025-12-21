@@ -16,14 +16,14 @@ import java.util.List;
  * Jugador proposat amb MiniMax
  * @author Pau i Lidia
  */
-public class Oustlayer implements IPlayer, IAuto {
+public class PlayerMiniMax implements IPlayer, IAuto {
     
     int profunditat;
     PlayerMove moviment;
+    long nodesExplorats;
     
-    public Oustlayer(int prof) {
+    public PlayerMiniMax (int prof) {
         this.profunditat = prof;
-
         List<Point> millorTirada = new ArrayList<>();
         long numNodesExplorats = 0;
         int maxDepth = prof;
@@ -54,11 +54,12 @@ public class Oustlayer implements IPlayer, IAuto {
         //Despres de la tirada, torno a fer current player. Si es el mateix, he matat.
         //Si no es el mateix, passo de max a min o al revés (la tirada no ha matat a ningú i li toca al altre jugador)
         
-        PlayerMove move = triaMillorMoviment(s1, profunditat);
-        return move;
+        triaMillorMoviment(s1, profunditat);
+        
+        return moviment;
     }
     
-    private PlayerMove triaMillorMoviment(GameStatus t, int depth)
+    private void triaMillorMoviment(GameStatus t, int depth)
     {
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
@@ -76,12 +77,14 @@ public class Oustlayer implements IPlayer, IAuto {
             t_nou.placeStone(p);
             
             // Creamos un contenedor vacio para que la recursión nos lo rellene
-            PlayerMove childMove = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
+            List<Point> movimentsExtres = new ArrayList<>();
+            
+            nodesExplorats++;
             
             int candidat;
             // Lógica de captura: Si sigo siendo yo, llamo a Max
-            if (t_nou.getCurrentPlayer() == player) candidat = Max_Valor(t_nou, childMove, depth, alpha, beta);
-            else candidat = Min_Valor(t_nou, childMove, depth-1, alpha, beta);
+            if (t_nou.getCurrentPlayer() == player) candidat = Max_Valor(t_nou, movimentsExtres, depth, alpha, beta);
+            else candidat = Min_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
             
             if (candidat > valor){ // IMPORTANTE: Usar > en lugar de >= para evitar sesgo al final
                 valor = candidat;
@@ -90,18 +93,23 @@ public class Oustlayer implements IPlayer, IAuto {
                 
                 // Si era una captura (mismo jugador), pegamos la secuencia del hijo
                 if (t_nou.getCurrentPlayer() == player) {
-                    millorSecuencia.addAll(childMove.getPoints());
+                    millorSecuencia.addAll(movimentsExtres);
                 }
             }
-            
             alpha = Math.max(alpha, valor);
         }
         
+        moviment.getPoints().clear();
+        moviment.getPoints().addAll(millorSecuencia);
+        moviment.setNumerOfNodesExplored(nodesExplorats);
         // Devolvemos la secuencia completa construida
-        return new PlayerMove(millorSecuencia, 0, depth, MINIMAX);
+        return;
     }
 
-    private int Max_Valor(GameStatus t, PlayerMove moviments, int depth, int alpha, int beta){
+    private int Max_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
+        
+        nodesExplorats++;
+
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -124,22 +132,24 @@ public class Oustlayer implements IPlayer, IAuto {
             t_nou.placeStone(p);
             
             // Contenedor para la siguiente recursión
-            PlayerMove nextMoveContainer = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
-            int valHijo;
+            List<Point> movimentsExtres = new ArrayList<>();
+            int candidat;
 
-            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) valHijo = Max_Valor(t_nou, nextMoveContainer, depth, alpha, beta);
-            else valHijo = Min_Valor(t_nou, nextMoveContainer, depth-1, alpha, beta);
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Max_Valor(t_nou, movimentsExtres, depth, alpha, beta);
+            else candidat = Min_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
             
-            if (valHijo > valor) {
-                valor = valHijo;
+            if (candidat > valor) {
+                valor = candidat;
+                if (depth == profunditat){
+                    // AQUÍ ESTÁ LA SOLUCIÓN:
+                    // Actualizamos el objeto 'moviments' del padre con la mejor jugada encontrada aquí
+                    moviments.clear();
+                    moviments.add(p);
+                    
+                    // Si ha sido captura, añadimos lo que nos ha devuelto el hijo
+                    if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) moviments.addAll(movimentsExtres);
+                }
                 
-                // AQUÍ ESTÁ LA SOLUCIÓN:
-                // Actualizamos el objeto 'moviments' del padre con la mejor jugada encontrada aquí
-                moviments.getPoints().clear();
-                moviments.getPoints().add(p);
-                
-                // Si ha sido captura, añadimos lo que nos ha devuelto el hijo
-                if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) moviments.getPoints().addAll(nextMoveContainer.getPoints());
             }
             
             alpha = Math.max(alpha, valor);
@@ -148,7 +158,10 @@ public class Oustlayer implements IPlayer, IAuto {
         return valor;
     }
 
-    private int Min_Valor(GameStatus t, PlayerMove moviments, int depth, int alpha, int beta){
+    private int Min_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
+        
+        nodesExplorats++;
+
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -168,20 +181,14 @@ public class Oustlayer implements IPlayer, IAuto {
             GameStatus t_nou = new GameStatus(t);
             t_nou.placeStone(p);
             
-            PlayerMove nextMoveContainer = new PlayerMove(new ArrayList<>(), 0, 0, MINIMAX);
-            int valHijo;
+            List<Point> movimentsExtres = new ArrayList<>();
+            int candidat;
             
-            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) valHijo = Min_Valor(t_nou, nextMoveContainer, depth, alpha, beta);
-            else valHijo = Max_Valor(t_nou, nextMoveContainer, depth-1, alpha, beta);
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Min_Valor(t_nou, movimentsExtres, depth, alpha, beta);
+            else candidat = Max_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
 
-            if (valHijo < valor){
-                valor = valHijo;
-                // Para MIN no es crítico guardar la jugada, pero mantenemos la lógica por seguridad
-                moviments.getPoints().clear();
-                moviments.getPoints().add(p);
-                if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) {
-                    moviments.getPoints().addAll(nextMoveContainer.getPoints());
-                }
+            if (candidat < valor){
+                valor = candidat;
             }
             
             beta = Math.min(beta, valor);
@@ -202,7 +209,7 @@ public class Oustlayer implements IPlayer, IAuto {
      */
     @Override
     public String getName() {
-        return "Oustlayer(" + "MiniMaxPlayer" + ")";
+        return "PlayerMiniMax";
     }
 
 }
