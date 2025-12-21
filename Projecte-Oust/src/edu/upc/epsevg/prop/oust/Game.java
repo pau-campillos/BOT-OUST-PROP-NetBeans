@@ -3,6 +3,7 @@ package edu.upc.epsevg.prop.oust;
 import edu.upc.epsevg.prop.oust.players.HumanPlayer;
 import edu.upc.epsevg.prop.oust.players.RandomPlayer;
 import edu.upc.epsevg.prop.oust.players.campillos_gil.PlayerMiniMax;
+import edu.upc.epsevg.prop.oust.players.campillos_gil.PlayerMiniMaxIDS;
 
 
 import javax.swing.SwingUtilities;
@@ -42,8 +43,8 @@ public class Game {
                 //IPlayer player1 = new RandomPlayer("");
                 //IPlayer player1 = new MOustValuablePlayer();
                 IPlayer player2 = new HumanPlayer("Human2");
-                IPlayer player1 = new PlayerMiniMax(4);
-                
+                //IPlayer player1 = new PlayerMiniMax(4);
+                IPlayer player1 = new PlayerMiniMaxIDS();
                                 
                 
                 //---------------------------------------------

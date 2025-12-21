@@ -19,15 +19,16 @@ import java.util.List;
 public class PlayerMiniMaxIDS implements IPlayer, IAuto {
     
     PlayerMove moviment;
-    boolean timedOut;
+    boolean timeOut;
+    PlayerMiniMax MinimaxActual;
 
-    public PlayerMiniMaxIDS () {
+    public PlayerMiniMaxIDS() {
         List<Point> millorTirada = new ArrayList<>();
         long numNodesExplorats = 0;
         int maxDepth = 1;//AAAAAAAAAAAAAA
         SearchType tipusCerca = MINIMAX;
         this.moviment = new PlayerMove(millorTirada, numNodesExplorats, maxDepth, tipusCerca);
-        this.timedOut = false;
+        this.timeOut = false;
     }
 
     /**
@@ -37,8 +38,11 @@ public class PlayerMiniMaxIDS implements IPlayer, IAuto {
     @Override
     public void timeout() {
         // Bah! Humans do not enjoy timeouts, oh, poor beasts !
-        timedOut = true;
+        timeOut = true;
         System.out.println("Bah! You are so slow...");
+        if (MinimaxActual != null) {
+            MinimaxActual.abortarMissio = true;
+        }
     }
 
     /**
@@ -50,16 +54,21 @@ public class PlayerMiniMaxIDS implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s1) {
-        
-        for (int i=1; !timedOut; i++){//AAAAAAAAAAAAAAAAAAAAA
-            PlayerMiniMax miniMax = new PlayerMiniMax(i);
-            PlayerMove result = miniMax.move(s1);
-            if (result.getMaxDepthReached>moviment.getMaxDepthReached())
+        timeOut = false;
+        // nos podriamos plantear devolver un movimiento ya culaquiera en caso de timeout 
+        //  demasiado rapido que no haya tenido tiempo ha devolver un mov
+
+        for (int i = 1; !timeOut; i++){
+            MinimaxActual = new PlayerMiniMax(i);
+            PlayerMove result = MinimaxActual.move(s1);
+            if (!MinimaxActual.haSigutAbortat()) {
                 moviment = new PlayerMove(result.getPoints(), result.getNumerOfNodesExplored(), result.getMaxDepthReached(), result.getSearchType());
+            } else {
+                break;
+            }
         }
         return moviment;
     }
-    
 
     /**
      * Retorna el nom del jugador que s'utlilitza per visualització a la UI

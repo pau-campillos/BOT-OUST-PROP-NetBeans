@@ -18,17 +18,21 @@ import java.util.List;
  */
 public class PlayerMiniMax implements IPlayer, IAuto {
     
-    int profunditat;
-    PlayerMove moviment;
-    long nodesExplorats;
+    int profunditat; // profunditat de cerca
+    PlayerMove moviment; // moviment/s a realitzar
+    long nodesExplorats; // nodes explorats en la cerca
+    public boolean abortarMissio; // indica si s'ha de parar la cerca ( només s'utilitza quan es crida per IDS )
     
     public PlayerMiniMax (int prof) {
         this.profunditat = prof;
+        abortarMissio = false;
+
         List<Point> millorTirada = new ArrayList<>();
-        long numNodesExplorats = 0;
+        nodesExplorats = 0;
         int maxDepth = prof;
         SearchType tipusCerca = MINIMAX;
-        this.moviment = new PlayerMove(millorTirada, numNodesExplorats, maxDepth, tipusCerca);
+
+        this.moviment = new PlayerMove(millorTirada, nodesExplorats, maxDepth, tipusCerca);
     }
 
     /**
@@ -37,8 +41,15 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     @Override
     public void timeout() {
-        // Bah! Humans do not enjoy timeouts, oh, poor beasts !
-        System.out.println("Bah! You are so slow...");
+        abortarMissio = false;
+    }
+
+    /**
+     * Indica si la missió de càlcul del moviment ha estat abortada
+     * @return true si ha estat abortada, false en cas contrari
+     */
+    public boolean haSigutAbortat() {
+        return abortarMissio;
     }
 
     /**
@@ -50,66 +61,61 @@ public class PlayerMiniMax implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s1) {
-        //PlayerType player = s1.getCurrentPlayer(); //No va aqui, va abans de fer la tirada del max i del min
-        //Despres de la tirada, torno a fer current player. Si es el mateix, he matat.
-        //Si no es el mateix, passo de max a min o al revés (la tirada no ha matat a ningú i li toca al altre jugador)
-        
         triaMillorMoviment(s1, profunditat);
-        
         return moviment;
     }
     
-    private void triaMillorMoviment(GameStatus t, int depth)
-    {
+    private void triaMillorMoviment(GameStatus t, int depth) {
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
 
+        nodesExplorats = 0; // Reiniciem el comptador de nodes explorats
+
         PlayerType player = t.getCurrentPlayer(); 
-        // Esta lista guardará la solución final completa
-        List<Point> millorSecuencia = new ArrayList<>();
-        
+        List<Point> millorSequencia = new ArrayList<>();
         List<Point> tiradesPossibles = t.getMoves();
 
-        for (int i = 0; i < tiradesPossibles.size(); i++){
+        for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++){
             Point p = tiradesPossibles.get(i);
+            nodesExplorats++; // actu comptador dels nodes explorats
+
             GameStatus t_nou = new GameStatus(t);
             t_nou.placeStone(p);
-            
-            // Creamos un contenedor vacio para que la recursión nos lo rellene
+
+            // contenidor per a les jugades extres en cas de captura
             List<Point> movimentsExtres = new ArrayList<>();
-            
-            nodesExplorats++;
-            
             int candidat;
-            // Lógica de captura: Si sigo siendo yo, llamo a Max
+            // lògica de captura: si el jugador actual és el mateix després de colocar la pedra, hi ha hagut captura
             if (t_nou.getCurrentPlayer() == player) candidat = Max_Valor(t_nou, movimentsExtres, depth, alpha, beta);
             else candidat = Min_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
             
-            if (candidat > valor){ // IMPORTANTE: Usar > en lugar de >= para evitar sesgo al final
+            if (abortarMissio) break;
+
+            if (candidat > valor){
                 valor = candidat;
-                millorSecuencia.clear();
-                millorSecuencia.add(p); // Añadimos mi piedra
+                millorSequencia.clear();
+                millorSequencia.add(p); // afegim la jugada actual
                 
-                // Si era una captura (mismo jugador), pegamos la secuencia del hijo
+                // Si era una captura (= jugador), afegim la sequencia del fill
                 if (t_nou.getCurrentPlayer() == player) {
-                    millorSecuencia.addAll(movimentsExtres);
+                    millorSequencia.addAll(movimentsExtres);
                 }
             }
             alpha = Math.max(alpha, valor);
         }
-        
-        moviment.getPoints().clear();
-        moviment.getPoints().addAll(millorSecuencia);
-        moviment.setNumerOfNodesExplored(nodesExplorats);
-        // Devolvemos la secuencia completa construida
-        return;
+
+        // guardem a la variable de classe el millor moviment trobat
+        if (!abortarMissio) {
+            moviment.getPoints().clear();
+            moviment.getPoints().addAll(millorSequencia);
+            moviment.setNumerOfNodesExplored(nodesExplorats);
+        }
     }
 
     private int Max_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
-        
-        nodesExplorats++;
-
+        if (abortarMissio) return 0;
+        nodesExplorats++; // actu comptador dels nodes explorats
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -124,34 +130,36 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         int valor = Integer.MIN_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
         
-        // No necesitamos copiar 'moviments' aquí, solo rellenarlo si encontramos algo mejor
-        
-        for (int i = 0; i < tiradesPossibles.size(); i++) {
+        for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
+
             GameStatus t_nou = new GameStatus(t);
             t_nou.placeStone(p);
-            
-            // Contenedor para la siguiente recursión
-            List<Point> movimentsExtres = new ArrayList<>();
-            int candidat;
 
+            // contenidor per a les jugades extres en cas de captura
+            List<Point> movimentsExtres;
+            if (depth == profunditat) movimentsExtres = new ArrayList<>();
+            else movimentsExtres = null;
+
+            int candidat;
+            // lògica de captura: si el jugador actual és el mateix després de colocar la pedra, hi ha hagut captura
             if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Max_Valor(t_nou, movimentsExtres, depth, alpha, beta);
             else candidat = Min_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
             
+            if (abortarMissio) return 0;
+
             if (candidat > valor) {
                 valor = candidat;
-                if (depth == profunditat){
-                    // AQUÍ ESTÁ LA SOLUCIÓN:
-                    // Actualizamos el objeto 'moviments' del padre con la mejor jugada encontrada aquí
+                if (depth == profunditat){ // només afegim els moviments inicials 
+                    // actualizem l'objecte 'moviments' amb la millor jugada trobada
                     moviments.clear();
                     moviments.add(p);
                     
-                    // Si ha sido captura, añadimos lo que nos ha devuelto el hijo
+                    // si hi ha hagut captura, afegim els moviments extres
                     if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) moviments.addAll(movimentsExtres);
                 }
-                
             }
-            
+            // fem poda alfa-beta
             alpha = Math.max(alpha, valor);
             if (beta <= alpha) break;
         }
@@ -159,9 +167,8 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     }
 
     private int Min_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
-        
-        nodesExplorats++;
-
+        if (abortarMissio) return 0;
+        nodesExplorats++; // actu comptador dels nodes explorats
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -176,21 +183,23 @@ public class PlayerMiniMax implements IPlayer, IAuto {
         int valor = Integer.MAX_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
         
-        for (int i = 0; i < tiradesPossibles.size(); i++) {
+        for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
+
             GameStatus t_nou = new GameStatus(t);
             t_nou.placeStone(p);
             
-            List<Point> movimentsExtres = new ArrayList<>();
             int candidat;
+            // lògica de captura: si el jugador actual és el mateix després de colocar la pedra, hi ha hagut captura
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Min_Valor(t_nou, moviments, depth, alpha, beta);
+            else candidat = Max_Valor(t_nou, moviments, depth-1, alpha, beta);
             
-            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Min_Valor(t_nou, movimentsExtres, depth, alpha, beta);
-            else candidat = Max_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
+            if (abortarMissio) return 0;
 
             if (candidat < valor){
                 valor = candidat;
             }
-            
+            // fem poda alfa-beta
             beta = Math.min(beta, valor);
             if (beta <= alpha) break;
         }
