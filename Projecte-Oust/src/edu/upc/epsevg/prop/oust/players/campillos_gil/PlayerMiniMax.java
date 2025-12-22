@@ -16,7 +16,7 @@ import java.util.List;
  * Jugador proposat amb MiniMax
  * @author Pau i Lidia
  */
-public class PlayerMiniMax implements IPlayer, IAuto {
+public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
     
     int profunditat; // profunditat de cerca
     PlayerMove moviment; // moviment/s a realitzar
@@ -207,7 +207,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     private int valorarEstat(GameStatus t){
         ++nodesExplorats;
         int h = 0;
-        //h = evaluarEstat(t);
+        //h = evaluarEstat(t); // CANVIAR A TUNNEDDDDDDDDDDDD
         return h;
     }
     /**
