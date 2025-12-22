@@ -78,7 +78,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++){
             Point p = tiradesPossibles.get(i);
-            nodesExplorats++; // actu comptador dels nodes explorats
 
             GameStatus t_nou = new GameStatus(t);
             t_nou.placeStone(p);
@@ -115,7 +114,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
     private int Max_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
         if (abortarMissio) return 0;
-        nodesExplorats++; // actu comptador dels nodes explorats
+        
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -168,7 +167,6 @@ public class PlayerMiniMax implements IPlayer, IAuto {
 
     private int Min_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
         if (abortarMissio) return 0;
-        nodesExplorats++; // actu comptador dels nodes explorats
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
             if (winner == t.getCurrentPlayer()) {
@@ -207,6 +205,7 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     }
 
     private int valorarEstat(GameStatus t){
+        ++nodesExplorats;
         int h = 0;
         //h = evaluarEstat(t);
         return h;
@@ -220,5 +219,4 @@ public class PlayerMiniMax implements IPlayer, IAuto {
     public String getName() {
         return "PlayerMiniMax";
     }
-
 }

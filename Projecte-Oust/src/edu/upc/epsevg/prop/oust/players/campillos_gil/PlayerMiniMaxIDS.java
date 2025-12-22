@@ -25,10 +25,9 @@ public class PlayerMiniMaxIDS implements IPlayer, IAuto {
     public PlayerMiniMaxIDS() {
         List<Point> millorTirada = new ArrayList<>();
         long numNodesExplorats = 0;
-        int maxDepth = 1;//AAAAAAAAAAAAAA
+        int maxDepth = 0;
         SearchType tipusCerca = MINIMAX;
         this.moviment = new PlayerMove(millorTirada, numNodesExplorats, maxDepth, tipusCerca);
-        this.timeOut = false;
     }
 
     /**
@@ -55,18 +54,20 @@ public class PlayerMiniMaxIDS implements IPlayer, IAuto {
     @Override
     public PlayerMove move(GameStatus s1) {
         timeOut = false;
-        // nos podriamos plantear devolver un movimiento ya culaquiera en caso de timeout 
-        //  demasiado rapido que no haya tenido tiempo ha devolver un mov
-
+        
         for (int i = 1; !timeOut; i++){
             MinimaxActual = new PlayerMiniMax(i);
             PlayerMove result = MinimaxActual.move(s1);
             if (!MinimaxActual.haSigutAbortat()) {
                 moviment = new PlayerMove(result.getPoints(), result.getNumerOfNodesExplored(), result.getMaxDepthReached(), result.getSearchType());
-            } else {
-                break;
             }
         }
+        if (moviment.getPoints().size()==0){
+            //tirar primera possible
+            List<Point> tiradesPossibles = s1.getMoves();
+            if (tiradesPossibles.size() > 0) moviment.getPoints().add(tiradesPossibles.get(0));
+        }
+
         return moviment;
     }
 

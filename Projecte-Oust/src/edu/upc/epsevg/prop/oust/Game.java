@@ -34,17 +34,17 @@ public class Game {
                 // Deixem el tontet en mans d'una mala persona
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("Asterix");
-                //IPlayer player2 = new MalaOustiaPlayer();
+                //IPlayer player1 = new MalaOustiaPlayer();
                 
                 
                 //---------------------------------------------
                 // Enjoy!
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("");
-                //IPlayer player1 = new MOustValuablePlayer();
+                IPlayer player1 = new MOustValuablePlayer();
                 IPlayer player2 = new HumanPlayer("Human2");
                 //IPlayer player1 = new PlayerMiniMax(4);
-                IPlayer player1 = new PlayerMiniMaxIDS();
+                //IPlayer player1 = new PlayerMiniMaxIDS();
                                 
                 
                 //---------------------------------------------
