@@ -4,6 +4,7 @@ import edu.upc.epsevg.prop.oust.IPlayer;
 import edu.upc.epsevg.prop.oust.IAuto;
 import edu.upc.epsevg.prop.oust.Game;
 import edu.upc.epsevg.prop.oust.GameStatus;
+import edu.upc.epsevg.prop.oust.GameStatusTunned;
 import edu.upc.epsevg.prop.oust.PlayerMove;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import edu.upc.epsevg.prop.oust.SearchType;
@@ -61,11 +62,12 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
      */
     @Override
     public PlayerMove move(GameStatus s1) {
-        triaMillorMoviment(s1, profunditat);
+        GameStatusTunned s2 = new GameStatusTunned(s1);
+        triaMillorMoviment(s2, profunditat);
         return moviment;
     }
     
-    private void triaMillorMoviment(GameStatus t, int depth) {
+    private void triaMillorMoviment(GameStatusTunned t, int depth) {
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
@@ -79,7 +81,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++){
             Point p = tiradesPossibles.get(i);
 
-            GameStatus t_nou = new GameStatus(t);
+            GameStatusTunned t_nou = new GameStatusTunned(t);
             t_nou.placeStone(p);
 
             // contenidor per a les jugades extres en cas de captura
@@ -112,7 +114,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         }
     }
 
-    private int Max_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
+    private int Max_Valor(GameStatusTunned t, List<Point> moviments, int depth, int alpha, int beta){
         if (abortarMissio) return 0;
         
         if (t.isGameOver()){
@@ -132,7 +134,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
 
-            GameStatus t_nou = new GameStatus(t);
+            GameStatusTunned t_nou = new GameStatusTunned(t);
             t_nou.placeStone(p);
 
             // contenidor per a les jugades extres en cas de captura
@@ -165,7 +167,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         return valor;
     }
 
-    private int Min_Valor(GameStatus t, List<Point> moviments, int depth, int alpha, int beta){
+    private int Min_Valor(GameStatusTunned t, List<Point> moviments, int depth, int alpha, int beta){
         if (abortarMissio) return 0;
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
@@ -184,7 +186,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
 
-            GameStatus t_nou = new GameStatus(t);
+            GameStatusTunned t_nou = new GameStatusTunned(t);
             t_nou.placeStone(p);
             
             int candidat;
@@ -204,10 +206,10 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         return valor;
     }
 
-    private int valorarEstat(GameStatus t){
+    private int valorarEstat(GameStatusTunned t){
         ++nodesExplorats;
         int h = 0;
-        //h = evaluarEstat(t); // CANVIAR A TUNNEDDDDDDDDDDDD
+        h = evaluarEstat(t); // CANVIAR A TUNNEDDDDDDDDDDDD
         return h;
     }
     /**

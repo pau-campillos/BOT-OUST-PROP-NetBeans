@@ -30,11 +30,11 @@ public class GameStatusTunned extends GameStatus{
     }
 
     @Override
-    public void placeStone(Point point) {
+    public void placeStone(Point p) {
 
         int difFitxes = diff();
 
-        super.placeStone(point); 
+        super.placeStone(p); 
         int difFitxesFinal = diff();
         int diferencia = Math.abs(difFitxesFinal - difFitxes);
         if (diferencia != 1) {
@@ -46,32 +46,26 @@ public class GameStatusTunned extends GameStatus{
             inicialitzarDS();
         } else {
             // Només hem afegit una fitxa, podem actualitzar el DisjointSet
-            PlayerType jugadorTirada = this.getColor(point);
-            int indexActual = ds.calculaIndex(point);
+            PlayerType jugadorTirada = this.getColor(p);
 
             // Unim amb els veïns del mateix color
-            conectarVeins(point.y, point.x, jugadorTirada);
+            conectarVeins(p, jugadorTirada);
         }
         //...
         // les vostes cosetes...
     }
 
     
-    private void conectarVeins(int r, int c, PlayerType myColor) {
-        // Direccions en hexagonal (depèn de la implementació del profe,
-        // normalment són (0,1), (0,-1), (1,0), (-1,0), (1,-1), (-1,1) en coordenades axials/offset)
-        // Has de verificar quines són les coordenades adjacents correctes al Oust.
-        // Aquí poso un exemple genèric:
-
+    private void conectarVeins(Point p, PlayerType myColor) {
         for (Dir d : Dir.values()) {
-            int nr = r + d[0];
-            int nc = c + d[1];
-            
+            //int nr = p.x + d.add(p).x;
+            //int nc = p.y + d.add(p).y;
+
             // Verifiquem límits
-            Point veiP = new Point(nr, nc);
+            Point veiP = d.add(p);
             if (this.isInBounds(veiP)) { 
                 if (this.getColor(veiP) == myColor) {
-                    ds.union(getIndex(r, c), getIndex(nr, nc));
+                    ds.union(getIndex(p), getIndex(veiP));
                 }
             }
         }
@@ -94,24 +88,28 @@ public class GameStatusTunned extends GameStatus{
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
 
-                if (this.isInBounds(new Point(r, c)) == false) continue;
+                
+                Point p = new Point(r,c);
+                
+                if (this.isInBounds(p) == false) continue;
 
-                PlayerType type = this.getColor(r, c);
+                PlayerType type = this.getColor(p);
                 
                 if (type != null) {
                     
                     // Unim amb els veïns que ja hem visitat 
                     // (per exemple, només cal mirar amunt i esquerra si recorrem en ordre, 
                     // però en hexagonal és més segur mirar els veïns vàlids adjacents)
-                    conectarVeins(r, c, type);
+                    ds.numNodes++;
+                    conectarVeins(p, type);
                 }
             }
         }
     }
 
     // Mapeig de (Row, Col) a Index (0..N)
-    public int getIndex(int r, int c) {
-        return r * this.cols + c;
+    public int getIndex(Point p) {
+        return p.y * this.cols + p.x;
     }
     
     // Getter per a la teva heurística
@@ -119,11 +117,6 @@ public class GameStatusTunned extends GameStatus{
         return this.ds;
     }
 
-        
-    /*
-    public int calculaIndex (Point p){
-            // {Índice} =(fila * ancho_del_tablero) + (columna)
-            return (p.y * getSquareSize) + p.x;
-        }   
-    */
+    // {Índice} =(fila * ancho_del_tablero) + (columna)
+    
 }
