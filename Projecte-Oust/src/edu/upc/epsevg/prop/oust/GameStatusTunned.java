@@ -14,23 +14,67 @@ public class GameStatusTunned extends GameStatus{
     private int rows;
     private int cols;
 
+    // Constructor per començar de zero (root)
     public GameStatusTunned(GameStatus gs) {
         super(gs);
-        inicialitzarDS();
+        inicialitzarDS(); 
+    }
+
+    public GameStatusTunned(GameStatusTunned gs) {
+        super(gs);
+        if (gs.ds != null) {
+            this.ds = new DisjointSet(gs.ds);
+        } else {
+            inicialitzarDS();
+        }
     }
 
     @Override
     public void placeStone(Point point) {
 
+        int difFitxes = diff();
 
         super.placeStone(point); 
+        int difFitxesFinal = diff();
+        int diferencia = Math.abs(difFitxesFinal - difFitxes);
+        if (diferencia != 1) {
+            //HEM  MATAT; REVISAR DISJOINT-SET
 
+            // Com que 'super.placeStone' pot haver esborrat fitxes, 
+            // el DisjointSet antic ja no és vàlid (no suporta esborrats).
+            // Hem de regenerar-lo mirant com ha quedat el tauler.
+            inicialitzarDS();
+        } else {
+            // Només hem afegit una fitxa, podem actualitzar el DisjointSet
+            PlayerType jugadorTirada = this.getColor(point);
+            int indexActual = ds.calculaIndex(point);
+
+            // Unim amb els veïns del mateix color
+            conectarVeins(point.y, point.x, jugadorTirada);
+        }
         //...
         // les vostes cosetes...
-        // Com que 'super.placeStone' pot haver esborrat fitxes, 
-        // el DisjointSet antic ja no és vàlid (no suporta esborrats).
-        // Hem de regenerar-lo mirant com ha quedat el tauler.
-        inicialitzarDS();
+    }
+
+    
+    private void conectarVeins(int r, int c, PlayerType myColor) {
+        // Direccions en hexagonal (depèn de la implementació del profe,
+        // normalment són (0,1), (0,-1), (1,0), (-1,0), (1,-1), (-1,1) en coordenades axials/offset)
+        // Has de verificar quines són les coordenades adjacents correctes al Oust.
+        // Aquí poso un exemple genèric:
+
+        for (Dir d : Dir.values()) {
+            int nr = r + d[0];
+            int nc = c + d[1];
+            
+            // Verifiquem límits
+            Point veiP = new Point(nr, nc);
+            if (this.isInBounds(veiP)) { 
+                if (this.getColor(veiP) == myColor) {
+                    ds.union(getIndex(r, c), getIndex(nr, nc));
+                }
+            }
+        }
     }
 
     /**
@@ -38,7 +82,7 @@ public class GameStatusTunned extends GameStatus{
      * els grups des de zero.
      */
     private void inicialitzarDS() {
-        int size = this.getSquareSize(); // 
+        int size = this.getSquareSize();
         // Assumim tauler quadrat per la matriu subjacent, o fem servir size*size
         int totalCells = size * size; 
         
@@ -49,39 +93,17 @@ public class GameStatusTunned extends GameStatus{
         // Recorrem tot el tauler per crear els grups
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                PlayerType type = this.getColor(r, c); // [cite: 83]
+
+                if (this.isInBounds(new Point(r, c)) == false) continue;
+
+                PlayerType type = this.getColor(r, c);
                 
                 if (type != null) {
-                    int indexActual = getIndex(r, c);
-                    ds.setOwner(indexActual, type);
                     
                     // Unim amb els veïns que ja hem visitat 
                     // (per exemple, només cal mirar amunt i esquerra si recorrem en ordre, 
                     // però en hexagonal és més segur mirar els veïns vàlids adjacents)
                     conectarVeins(r, c, type);
-                }
-            }
-        }
-    }
-
-    private void conectarVeins(int r, int c, PlayerType myColor) {
-        // Direccions en hexagonal (depèn de la implementació del profe,
-        // normalment són (0,1), (0,-1), (1,0), (-1,0), (1,-1), (-1,1) en coordenades axials/offset)
-        // Has de verificar quines són les coordenades adjacents correctes al Oust.
-        // Aquí poso un exemple genèric:
-        int[][] directions = {{0,1}, {0,-1}, {1,0}, {-1,0}, {1,-1}, {-1,1}}; 
-        
-        for (int[] d : directions) {
-            int nr = r + d[0];
-            int nc = c + d[1];
-            
-            // Verifiquem límits [cite: 66] (isInBounds no surt al resum però sol existir, 
-            // si no, usem try-catch o lògica de límits manual)
-            Point veiP = new Point(nr, nc);
-            // Nota: isInBounds surt a la Pàgina 2 [cite: 40] -> isInBounds(Point p)
-            if (this.isInBounds(veiP)) { 
-                if (this.getColor(veiP) == myColor) {
-                    ds.union(getIndex(r, c), getIndex(nr, nc));
                 }
             }
         }
@@ -97,4 +119,11 @@ public class GameStatusTunned extends GameStatus{
         return this.ds;
     }
 
+        
+    /*
+    public int calculaIndex (Point p){
+            // {Índice} =(fila * ancho_del_tablero) + (columna)
+            return (p.y * getSquareSize) + p.x;
+        }   
+    */
 }

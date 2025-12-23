@@ -8,28 +8,31 @@ public class DisjointSet {
     // Estructura Union-Find
     private int[] parent;          // Padre de cada nodo
     private int[] size;            // Tamaño del grupo
-    private PlayerType[] owner;    // Dueño del grupo (solo válido en la raíz)
 
     /**
      * Constructor
      * @param totalNodes Número total de casillas del tablero
      */
+
+    public DisjointSet(DisjointSet original) {
+        this.parent = new int[original.parent.length];
+        this.size = new int[original.size.length]; // O rank, o el que tinguis
+        
+        // La màgia de Java: còpia de memòria a memòria (molt ràpid)
+        System.arraycopy(original.parent, 0, this.parent, 0, original.parent.length);
+        System.arraycopy(original.size, 0, this.size, 0, original.size.length);
+        // Copia altres atributs si en tens (numSets, etc.)
+    }
+
     public DisjointSet(int totalNodes) {
         parent = new int[totalNodes];
         size = new int[totalNodes];
-        owner = new PlayerType[totalNodes];
 
         for (int i = 0; i < totalNodes; i++) {
             parent[i] = i;
             size[i] = 1;
-            owner[i] = null; // grupo vacío
         }
     }
-
-    public int calculaIndex (Point p){
-        // {Índice} =(fila * ancho_del_tablero) + (columna)
-        return (p.y * (int)Math.sqrt(parent.length)) + p.x;
-    }   
      
     /**
      * FIND con compresión de camino
@@ -59,27 +62,6 @@ public class DisjointSet {
 
         parent[rootB] = rootA;
         size[rootA] += size[rootB];
-
-        // Propagamos el owner
-        if (owner[rootA] == null) {
-            owner[rootA] = owner[rootB];
-        }
-    }
-
-    /**
-     * Asigna el dueño del grupo al que pertenece i
-     */
-    public void setOwner(int i, PlayerType player) {
-        int root = find(i);
-        owner[root] = player;
-    }
-
-    /**
-     * Devuelve el dueño del grupo al que pertenece i
-     */
-    public PlayerType getOwner(int i) {
-        int root = find(i);
-        return owner[root];
     }
 
     /**
