@@ -34,11 +34,12 @@ public class Heuristica {
         // Calculem el rival
         PlayerType rival = (jo == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
 
-        if (esApertura) {
+        System.out.print(ds.numNodes);
+        //if (esApertura) {
             return evaluarApertura(t, jo, rival, ds);
-        } else {
-            return evaluarCombate(t, ds, jo, rival);
-        }
+        //} else {
+         //   return evaluarCombate(t, ds, jo, rival);
+        //}
     }
 
     // --- FASE 1: APERTURA (Estratègia Posicional :) ) ---
@@ -65,21 +66,21 @@ public class Heuristica {
                 int distanciaY = Math.abs(c - centre);
 
                 if (r == 0 || c == 0 || r == size - 1 || c == size - 1) { // Penalitzem bordes
-                    valorPos -= 20;
-                } else if (distanciaX > 4 || distanciaY > 4){ // No volem exteriors
                     valorPos -= 10;
+                } else if (distanciaX > 4 || distanciaY > 4){ // No volem exteriors
+                    valorPos -= 7;
                 } else if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
-                    valorPos = 50;
+                    valorPos = 40;
                 } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 50;
+                    valorPos = 40;
                 } else if (distanciaX == 4 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 50;
-                } else if (distanciaX == 4 || distanciaY == 4){ // Volem cantonades estratègiques
+                    valorPos = 40;
+                } else if (distanciaX == 4 || distanciaY == 4){ // Volem borera
                     valorPos = 30;
                 } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
-                    valorPos = 40;
+                    valorPos = 20;
                 } else if (distanciaX == 0 && distanciaY == 0){ // Volem el centre
-                    valorPos = 100;
+                    valorPos = 30;
                 } else {
                     valorPos = 20; // La resta adopten valors intermedis
                 }
@@ -87,10 +88,15 @@ public class Heuristica {
                 //HEM DE REVISAR LES CASELLES CONTIGUES. SI TENIM AMENAÇES, SERÀ DOLENT!!!!!!!!!!!
                 
                 // Assignem puntuació segons qui ocupa la casella
-                if (celda == jo) score += valorPos;
-                else if (celda == rival) score -= valorPos;
+                if (celda == jo) {
+                    score += valorPos;
+                    score += evaluarAmenazaInminent(t, ds, p, jo);
+                }
+                else if (celda == rival) {
+                    score -= valorPos;
+                    score -= evaluarAmenazaInminent(t, ds, p, jo);
+                }
 
-                score += evaluarAmenazaInminent(t, ds, p, jo);
             }
         }
 
@@ -153,12 +159,14 @@ public class Heuristica {
         // Si falla, prueba new Point(y, x).
     }
 
-    private int evaluarAmenazaInminent(GameStatusTunned t, DisjointSet ds, Point p, PlayerType jo) {
+    private int evaluarAmenazaInminent(GameStatusTunned t, DisjointSet ds, Point p, PlayerType jugadorNostre) {
         
         int bonus = 0;
         
         int index = t.getIndex(p);
         int miTamanyo = ds.getSize(index);
+
+        PlayerType jo = t.getColor(p);
 
         // 1. Calcular mi tamaño potencial
         /* for (Dir d : Dir.values()) {
@@ -192,7 +200,7 @@ public class Heuristica {
                     if (miTamanyo != tamRival) {
                         bonus += (miTamanyo - tamRival * 40); 
                     } else {
-                        if (t.getCurrentPlayer()==jo)
+                        if (t.getCurrentPlayer()==jugadorNostre)
                                 bonus += 100; // Podem matar al grup, tot i ser del mateix tamany
                         else bonus -=100;
                     }
@@ -207,7 +215,7 @@ public class Heuristica {
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
                 
-                if (typeV != null && typeV != jo) {
+                if (typeV != null) {
                     if (typeV != jo) {
                         int idx = t.getIndex(vei);
                         int tamRival = ds.getSize(idx);
@@ -216,12 +224,12 @@ public class Heuristica {
                         if (miTamanyo != tamRival) {
                             bonus += (miTamanyo - tamRival * 20); 
                         } else {
-                            if (t.getCurrentPlayer()==jo)
+                            if (t.getCurrentPlayer()==jugadorNostre)
                                 bonus += 50; // Podem matar al grup, tot i ser del mateix tamany
                             else bonus -=60;
                         }
                     } else {
-                        bonus += 15;
+                        bonus -= 14;
                     }
                 }
             }
