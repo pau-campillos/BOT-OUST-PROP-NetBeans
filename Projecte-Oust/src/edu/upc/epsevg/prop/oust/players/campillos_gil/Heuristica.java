@@ -28,21 +28,21 @@ public class Heuristica {
         
         // 2. Deteccióde Fase
         int mida = t.getSize();
-        boolean esApertura = ds.numNodes < mida * mida / 6; // disseny nostre 
+        boolean esApertura = ds.numNodes < mida * mida / 4; // disseny nostre 
 
         //PlayerType jo = t.getCurrentPlayer();
         // Calculem el rival
         PlayerType rival = (jo == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
 
-        //if (esApertura) {
-            return evaluarApertura(t, jo, rival);
-        //} else {
-        //    return evaluarCombate(t, ds, jo, rival);
-        //}
+        if (esApertura) {
+            return evaluarApertura(t, jo, rival, ds);
+        } else {
+            return evaluarCombate(t, ds, jo, rival);
+        }
     }
 
     // --- FASE 1: APERTURA (Estratègia Posicional :) ) ---
-    private int evaluarApertura(GameStatusTunned t, PlayerType jo, PlayerType rival) {
+    private int evaluarApertura(GameStatusTunned t, PlayerType jo, PlayerType rival, DisjointSet ds) {
         int score = 0;
         int size = t.getSquareSize(); 
         int centre = size / 2;
@@ -65,23 +65,23 @@ public class Heuristica {
                 int distanciaY = Math.abs(c - centre);
 
                 if (r == 0 || c == 0 || r == size - 1 || c == size - 1) { // Penalitzem bordes
-                    valorPos -= 300;
+                    valorPos -= 20;
                 } else if (distanciaX > 4 || distanciaY > 4){ // No volem exteriors
-                    valorPos -= 200;
+                    valorPos -= 10;
                 } else if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
-                    valorPos = 500;
+                    valorPos = 50;
                 } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 500;
+                    valorPos = 50;
                 } else if (distanciaX == 4 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 500;
+                    valorPos = 50;
                 } else if (distanciaX == 4 || distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 300;
+                    valorPos = 30;
                 } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
-                    valorPos = 300;
-                } else if (distanciaX == 0 || distanciaY == 0){ // Volem el centre
-                    valorPos = 1000;
+                    valorPos = 40;
+                } else if (distanciaX == 0 && distanciaY == 0){ // Volem el centre
+                    valorPos = 100;
                 } else {
-                    valorPos = 200; // La resta adopten valors intermedis
+                    valorPos = 20; // La resta adopten valors intermedis
                 }
                 
                 //HEM DE REVISAR LES CASELLES CONTIGUES. SI TENIM AMENAÇES, SERÀ DOLENT!!!!!!!!!!!
@@ -89,8 +89,15 @@ public class Heuristica {
                 // Assignem puntuació segons qui ocupa la casella
                 if (celda == jo) score += valorPos;
                 else if (celda == rival) score -= valorPos;
+
+                score += evaluarAmenazaInminent(t, ds, p, jo);
             }
         }
+
+        if (jo == PlayerType.PLAYER1)
+            score += t.diff()*100;
+        else score -= t.diff()*100;
+        
         return score;
     }
 
@@ -124,7 +131,7 @@ public class Heuristica {
             }
         
             if (owner != null){
-                score += evaluarAmenazaInminent(t, ds, p, jo, size);
+                score += evaluarAmenazaInminent(t, ds, p, jo);
             }
         }
 
@@ -146,9 +153,9 @@ public class Heuristica {
         // Si falla, prueba new Point(y, x).
     }
 
-    private double evaluarAmenazaInminent(GameStatusTunned t, DisjointSet ds, Point p, PlayerType yo, int sizeCols) {
+    private int evaluarAmenazaInminent(GameStatusTunned t, DisjointSet ds, Point p, PlayerType jo) {
         
-        double bonus = 0;
+        int bonus = 0;
         
         int index = t.getIndex(p);
         int miTamanyo = ds.getSize(index);
@@ -168,8 +175,8 @@ public class Heuristica {
         }*/
 
         // Veure possibles amenaces properes
-        int[][] dirs = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}, {0,-2}, {1,-1}, 
-                        {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
+        int[][] dirs = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}};
+        int[][] dirsExteriors = {{0,-2}, {1,-1},  {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
         for (int[] d : dirs) {
             
             Point vei = new Point(p.x + d[0], p.y + d[1]);
@@ -177,20 +184,49 @@ public class Heuristica {
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
                 
-                if (typeV != null && typeV != yo) {
+                if (typeV != null && typeV != jo) {
                     int idx = t.getIndex(vei);
                     int tamRival = ds.getSize(idx);
                     
                     // Lògica N+2: Si el nou grup es més gran, capturo
                     if (miTamanyo != tamRival) {
-                        bonus += (miTamanyo - tamRival * 500); 
+                        bonus += (miTamanyo - tamRival * 40); 
                     } else {
-                        bonus += 500; // Podem matar al grup, tot i ser del mateix tamany
+                        if (t.getCurrentPlayer()==jo)
+                                bonus += 100; // Podem matar al grup, tot i ser del mateix tamany
+                        else bonus -=100;
                     }
                 }
             }
         }
         
+        for (int[] d : dirsExteriors) {
+            
+            Point vei = new Point(p.x + d[0], p.y + d[1]);
+            
+            if (t.isInBounds(vei)) {
+                PlayerType typeV = t.getColor(vei);
+                
+                if (typeV != null && typeV != jo) {
+                    if (typeV != jo) {
+                        int idx = t.getIndex(vei);
+                        int tamRival = ds.getSize(idx);
+                        
+                        // Lògica N+2: Si el nou grup es més gran, capturo
+                        if (miTamanyo != tamRival) {
+                            bonus += (miTamanyo - tamRival * 20); 
+                        } else {
+                            if (t.getCurrentPlayer()==jo)
+                                bonus += 50; // Podem matar al grup, tot i ser del mateix tamany
+                            else bonus -=60;
+                        }
+                    } else {
+                        bonus += 15;
+                    }
+                }
+            }
+        }
+
         return bonus;
     }
 }
