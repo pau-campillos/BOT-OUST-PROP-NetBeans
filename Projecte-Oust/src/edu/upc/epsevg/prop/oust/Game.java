@@ -41,10 +41,10 @@ public class Game {
                 // Enjoy!
                 //---------------------------------------------
                 //IPlayer player1 = new RandomPlayer("");
-                IPlayer player1 = new MOustValuablePlayer();
+                IPlayer player2 = new MOustValuablePlayer();
                 //IPlayer player2 = new HumanPlayer("Human2");
-                //IPlayer player1 = new PlayerMiniMax(1);
-                IPlayer player2 = new PlayerMiniMaxIDS();
+                IPlayer player1 = new PlayerMiniMax(4);
+                //IPlayer player1 = new PlayerMiniMaxIDS();
                                 
                 
                 //---------------------------------------------
