@@ -13,7 +13,7 @@ public class Heuristica {
 
     }
 
-    public int evaluarEstat(GameStatusTunned t) {
+    public int evaluarEstat(GameStatusTunned t, PlayerType jo) {
 
         // 1. Fi del joc
         if (t.isGameOver()) {
@@ -27,17 +27,18 @@ public class Heuristica {
         int size = t.getSquareSize();
         
         // 2. Deteccióde Fase
-        boolean esApertura = ds.numNodes > size * size / 6; // disseny nostre 
+        int mida = t.getSize();
+        boolean esApertura = ds.numNodes < mida * mida / 6; // disseny nostre 
 
-        PlayerType jo = t.getCurrentPlayer();
+        //PlayerType jo = t.getCurrentPlayer();
         // Calculem el rival
         PlayerType rival = (jo == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
 
-        if (esApertura) {
+        //if (esApertura) {
             return evaluarApertura(t, jo, rival);
-        } else {
-            return evaluarCombate(t, ds, jo, rival);
-        }
+        //} else {
+        //    return evaluarCombate(t, ds, jo, rival);
+        //}
     }
 
     // --- FASE 1: APERTURA (Estratègia Posicional :) ) ---

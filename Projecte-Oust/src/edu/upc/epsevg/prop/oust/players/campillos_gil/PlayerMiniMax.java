@@ -23,7 +23,8 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
     PlayerMove moviment; // moviment/s a realitzar
     long nodesExplorats; // nodes explorats en la cerca
     public boolean abortarMissio; // indica si s'ha de parar la cerca ( només s'utilitza quan es crida per IDS )
-    
+    private PlayerType jo; // canviar nom a playerIni !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     public PlayerMiniMax (int prof) {
         this.profunditat = prof;
         abortarMissio = false;
@@ -77,7 +78,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         PlayerType player = t.getCurrentPlayer(); 
         List<Point> millorSequencia = new ArrayList<>();
         List<Point> tiradesPossibles = t.getMoves();
-
+        jo = t.getCurrentPlayer(); // possible millora de nom a playerIni 
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++){
             Point p = tiradesPossibles.get(i);
 
@@ -209,7 +210,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
     private int valorarEstat(GameStatusTunned t){
         ++nodesExplorats;
         int h = 0;
-        h = evaluarEstat(t); // CANVIAR A TUNNEDDDDDDDDDDDD
+        h = evaluarEstat(t, jo); // CANVIAR A TUNNEDDDDDDDDDDDD
         return h;
     }
     /**
