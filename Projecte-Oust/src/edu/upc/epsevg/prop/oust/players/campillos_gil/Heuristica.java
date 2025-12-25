@@ -28,21 +28,22 @@ public class Heuristica {
         
         // 2. Deteccióde Fase
         int mida = t.getSize();
-        boolean esApertura = ds.numNodes < mida * mida / 4; // disseny nostre 
+        boolean esApertura = ds.numNodes < mida * mida / 5; // disseny nostre 
 
         //PlayerType jo = t.getCurrentPlayer();
         // Calculem el rival
         PlayerType rival = (jo == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
 
-        //if (esApertura) {
-            return evaluarApertura(t, jo, rival, ds);
-        //} else {
+        if (esApertura) {
+            return evaluarApertura(true, t, jo, rival, ds);
+        } else {
          //   return evaluarCombate(t, ds, jo, rival);
-        //}
+         return evaluarApertura(false, t, jo, rival, ds);
+        }
     }
 
     // --- FASE 1: APERTURA (Estratègia Posicional :) ) ---
-    private int evaluarApertura(GameStatusTunned t, PlayerType jo, PlayerType rival, DisjointSet ds) {
+    private int evaluarApertura(boolean esApertura, GameStatusTunned t, PlayerType jo, PlayerType rival, DisjointSet ds) {
         int score = 0;
         int size = t.getSquareSize(); 
         int centre = size / 2;
@@ -89,11 +90,11 @@ public class Heuristica {
                 // Assignem puntuació segons qui ocupa la casella
                 if (celda == jo) {
                     score += valorPos;
-                    score += evaluarAmenazaInminent(true, t, ds, p, jo);
+                    score += evaluarAmenazaInminent(esApertura, t, ds, p, jo);
                 }
                 else if (celda == rival) {
                     score -= valorPos;
-                    score -= evaluarAmenazaInminent(true, t, ds, p, jo);
+                    score -= evaluarAmenazaInminent(esApertura, t, ds, p, jo);
                 }
 
             }
@@ -174,6 +175,7 @@ public class Heuristica {
         int contadorFitxesRivalsAmenaçants = 0;
         int contadorFitxesRivalsExteriors = 0;
         int contadorFitxesMeves = 0;
+        int casellesBuides = 0;
 
         for (int[] d : dirsColindants) {
             
@@ -232,39 +234,51 @@ public class Heuristica {
                         }
                     } else {
                         contadorFitxesMeves += 1;
-                        bonus -= 10;
+                        if (esApertura){
+                            bonus -= 10;
+                        } else {
+                            bonus -= 5;
+                        }
                     }
-                } else bonus++;
+                } else casellesBuides++;
             }
         }
 
-        if (esApertura) {
+        int[][] dirsExteriors = {{0,-3}, {2,-2}, {2,-1}, {3,0}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {0,3}, {-1,2}, {-2,1}, {-3,0}, {-3,-1}, {-3,-2}, {-3,-3}, {-2,-3}, {-1,-3}};
 
-            int[][] dirsExteriors = {{0,-3}, {2,-2}, {2,-1}, {3,0}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {0,3}, {-1,2}, {-2,1}, {-3,0}, {-3,-1}, {-3,-2}, {-3,-3}, {-2,-3}, {-1,-3}};
-
-            for (int[] d : dirsExteriors) {
-            
-                Point vei = new Point(p.x + d[0], p.y + d[1]);
-                
-                if (t.isInBounds(vei)) {
-                    PlayerType typeV = t.getColor(vei);
-                    
-                    if (typeV != null) {
-                        if (typeV == jo) {
-                            bonus += 15;
-                            contadorFitxesMeves += 1;
-                        }
-                        else {
-                            bonus +=   15;
-                            contadorFitxesRivalsExteriors += 1;
-                        }
-                    } else bonus++;
-                }
-            }
-        }
+        for (int[] d : dirsExteriors) {
         
-        if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) bonus += 30;
-        if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) bonus += 20;
+            Point vei = new Point(p.x + d[0], p.y + d[1]);
+            
+            if (t.isInBounds(vei)) {
+                PlayerType typeV = t.getColor(vei);
+                
+                if (typeV != null) {
+                    if (typeV == jo) {
+                        if (esApertura) {
+                            bonus += 15;
+                        } else {
+                            bonus -= 10;
+                        }
+                        contadorFitxesMeves += 1;
+                    }
+                    else {
+                        if (esApertura)
+                            bonus +=   15;
+                        else bonus += 5;
+                        contadorFitxesRivalsExteriors += 1;
+                    }
+                } //else casellesBuides++;
+            }
+        }
+        if (esApertura) {
+            if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
+                bonus += 30;
+            } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
+                bonus += 20;
+            }
+        }
+        bonus += casellesBuides * 1;
 
         return bonus;
     }
