@@ -28,7 +28,7 @@ public class Heuristica {
         
         // 2. Deteccióde Fase
         int mida = t.getSize();
-        boolean esApertura = ds.numNodes < mida * mida / 5; // disseny nostre 
+        boolean esApertura = ds.numNodes < mida * mida / 4; // disseny nostre 
 
         //PlayerType jo = t.getCurrentPlayer();
         // Calculem el rival
@@ -65,24 +65,28 @@ public class Heuristica {
                 int distanciaX = Math.abs(r - centre);
                 int distanciaY = Math.abs(c - centre);
 
-                if (r == 0 || c == 0 || r == size - 1 || c == size - 1) { // Penalitzem bordes
-                    valorPos -= 35;
+                if (distanciaX + distanciaY == t.getSize()-1) { // Penalitzem bordes
+                    if (esApertura) valorPos -= 20;
+                    else valorPos -= 5;
                 } else if (distanciaX > 4 || distanciaY > 4){ // No volem exteriors
-                    valorPos -= 15;
-                } else if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
-                    valorPos = 40;
-                } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 40;
-                } else if (distanciaX == 4 && distanciaY == 4){ // Volem cantonades estratègiques
-                    valorPos = 40;
-                } else if (distanciaX == 4 || distanciaY == 4){ // Volem borera
-                    valorPos = 30;
-                } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
-                    valorPos = 20;
-                } else if (distanciaX == 0 && distanciaY == 0){ // Volem el centre
-                    valorPos = 30;
-                } else {
-                    valorPos = 20; // La resta adopten valors intermedis
+                    if (esApertura) valorPos -= 10;
+                    else valorPos -= 2;
+                } else if (esApertura){
+                    if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
+                        valorPos = 25;
+                    } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
+                        valorPos = 25;
+                    } else if (distanciaX == 4 && distanciaY == 4){ // Volem cantonades estratègiques
+                        valorPos = 25;
+                    } else if (distanciaX == 4 || distanciaY == 4){ // Volem borera
+                        valorPos = 20;
+                    } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
+                        valorPos = 20;
+                    } else if (distanciaX == 0 && distanciaY == 0){ // Volem el centre
+                        valorPos = 22;
+                    } else {
+                        valorPos = 15; // La resta adopten valors intermedis
+                    }
                 }
                 
                 //HEM DE REVISAR LES CASELLES CONTIGUES. SI TENIM AMENAÇES, SERÀ DOLENT!!!!!!!!!!!
@@ -256,7 +260,7 @@ public class Heuristica {
                 if (typeV != null) {
                     if (typeV == jo) {
                         if (esApertura) {
-                            bonus += 15;
+                            bonus += 5;
                         } else {
                             bonus -= 10;
                         }
@@ -264,21 +268,35 @@ public class Heuristica {
                     }
                     else {
                         if (esApertura)
-                            bonus += 15;
-                        else bonus += 5;
+                            bonus += 10;
+                        else bonus += 10;
                         contadorFitxesRivalsExteriors += 1;
                     }
                 } //else casellesBuides++;
             }
         }
-        if (esApertura) {
+        //if (esApertura) {
             if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
                 bonus += 30;
             } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
                 bonus += 20;
+            } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0){
+                bonus += contadorFitxesRivalsExteriors * 5;
             }
+            //if (contadorFitxesMevesProperes > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesRivalsExteriors > 0){
+                //malament tenir peça alla, la zona ja està defensada
+            //}
+        //}
+        bonus += casellesBuides * 3;
+
+
+        int i = p.y * t.getSize() + p.x;
+        int gSize = ds.getSize(i);
+        if (jo==jugadorNostre) {
+            bonus += Math.pow(gSize, 2.2) * 5; // Exponencial per valorar més els grups grans
+        } else if (jo != null) {
+            bonus += Math.pow(gSize, 2.2) * 5; // Penalitzem més els grups grans enemics
         }
-        bonus += casellesBuides * 1;
 
         return bonus;
     }
