@@ -178,8 +178,13 @@ public class Heuristica {
         
         int contadorFitxesRivalsAmenaçants = 0;
         int contadorFitxesRivalsExteriors = 0;
-        int contadorFitxesMeves = 0;
         int casellesBuides = 0;
+        int contadorFitxesMevesProperes = 0;
+        int contadorFitxesMevesIntermig = 0;
+        int contadorFitxesMevesExteriors = 0;
+
+        List<Integer> grupsRivalsVists = new java.util.ArrayList<>();
+        int tamanyPotencialRival = 0;
 
         for (int[] d : dirsColindants) {
             
@@ -191,22 +196,32 @@ public class Heuristica {
                 if (typeV != null && typeV != jo) {
                     contadorFitxesRivalsAmenaçants += 1;
                     int idx = t.getIndex(vei);
-                    int tamRival = ds.getSize(idx);
-                    
-                    // Lògica N+2: Si el nou grup es més gran, capturo
-                    if (miTamanyo != tamRival) {
-                        bonus += (miTamanyo - tamRival) * 50; 
-                    } else {
-                        if (t.getCurrentPlayer()==jugadorNostre){
-                            if (jo == jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
-                            else bonus -= 35;
+
+                    //  he fet canvissss aquiiiiiiiiiiiii
+                    int rootRival = ds.find(idx);
+
+                    if(!grupsRivalsVists.contains(rootRival)){
+                        grupsRivalsVists.add(rootRival);
+                        int tamRival = ds.getSize(rootRival);
+                        
+                        tamanyPotencialRival += tamRival;
+                        // finssssssssss aquiiiiiiiiiiii
+
+                        // Lògica N+2: Si el nou grup es més gran, capturo
+                        if (miTamanyo != tamRival) {
+                            bonus += (miTamanyo - tamRival) * 50; 
                         } else {
-                            if (jo != jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
-                            else bonus -= 35;
+                            if (t.getCurrentPlayer()==jugadorNostre){
+                                if (jo == jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
+                                else bonus -= 35;
+                            } else {
+                                if (jo != jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
+                                else bonus -= 35;
+                            }
                         }
                     }
                 } else if (typeV == jo){
-                    contadorFitxesMeves += 1;
+                    contadorFitxesMevesProperes += 1;
                 }
             }
         }
@@ -237,7 +252,7 @@ public class Heuristica {
                             }
                         }
                     } else {
-                        contadorFitxesMeves += 1;
+                        contadorFitxesMevesIntermig += 1;
                         if (esApertura){
                             bonus -= 10;
                         } else {
@@ -264,7 +279,7 @@ public class Heuristica {
                         } else {
                             bonus -= 10;
                         }
-                        contadorFitxesMeves += 1;
+                        contadorFitxesMevesExteriors += 1;
                     }
                     else {
                         if (esApertura)
@@ -276,6 +291,8 @@ public class Heuristica {
             }
         }
         //if (esApertura) {
+            int contadorFitxesMeves = contadorFitxesMevesProperes + contadorFitxesMevesIntermig + contadorFitxesMevesExteriors;
+
             if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
                 bonus += 30;
             } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
@@ -283,21 +300,28 @@ public class Heuristica {
             } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0){
                 bonus += contadorFitxesRivalsExteriors * 5;
             }
-            //if (contadorFitxesMevesProperes > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesRivalsExteriors > 0){
+            if ((contadorFitxesMevesProperes > 0 || contadorFitxesMevesIntermig > 0 ) && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesRivalsExteriors > 0){
                 //malament tenir peça alla, la zona ja està defensada
-            //}
+                bonus -= 30;
+            }   
         //}
         bonus += casellesBuides * 3;
-
-
+        
+        int penalitzacioPerAlimentar = (int) (Math.pow(tamanyPotencialRival + 1, 3) * 10);
+        if (jo == jugadorNostre) {
+            bonus -= penalitzacioPerAlimentar;
+        } else {
+            bonus += penalitzacioPerAlimentar;
+        }
+        /* 
         int i = p.y * t.getSize() + p.x;
         int gSize = ds.getSize(i);
         if (jo==jugadorNostre) {
-            bonus += Math.pow(gSize, 2.2) * 5; // Exponencial per valorar més els grups grans
+            bonus += Math.pow(gSize, 2.2) * 20; // Exponencial per valorar més els grups grans
         } else if (jo != null) {
-            bonus += Math.pow(gSize, 2.2) * 5; // Penalitzem més els grups grans enemics
+            bonus += Math.pow(gSize, 2.2) * 100; // Penalitzem més els grups grans enemics
         }
-
+        */
         return bonus;
     }
 }
