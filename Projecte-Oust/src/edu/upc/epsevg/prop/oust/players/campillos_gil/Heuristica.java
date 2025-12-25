@@ -264,7 +264,7 @@ public class Heuristica {
                     }
                     else {
                         if (esApertura)
-                            bonus +=   15;
+                            bonus += 15;
                         else bonus += 5;
                         contadorFitxesRivalsExteriors += 1;
                     }
