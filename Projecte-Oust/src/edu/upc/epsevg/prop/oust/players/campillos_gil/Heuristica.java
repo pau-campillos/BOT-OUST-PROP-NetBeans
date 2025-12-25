@@ -65,9 +65,9 @@ public class Heuristica {
                 int distanciaY = Math.abs(c - centre);
 
                 if (r == 0 || c == 0 || r == size - 1 || c == size - 1) { // Penalitzem bordes
-                    valorPos -= 20;
+                    valorPos -= 35;
                 } else if (distanciaX > 4 || distanciaY > 4){ // No volem exteriors
-                    valorPos -= 10;
+                    valorPos -= 15;
                 } else if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
                     valorPos = 40;
                 } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
@@ -171,7 +171,8 @@ public class Heuristica {
         int[][] dirsColindants = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}};
         int[][] dirsIntermig = {{0,-2}, {1,-1}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
         
-        int contadorFitxesRivals = 0;
+        int contadorFitxesRivalsAmenaçants = 0;
+        int contadorFitxesRivalsExteriors = 0;
         int contadorFitxesMeves = 0;
 
         for (int[] d : dirsColindants) {
@@ -182,7 +183,7 @@ public class Heuristica {
                 PlayerType typeV = t.getColor(vei);
                 
                 if (typeV != null && typeV != jo) {
-                    contadorFitxesRivals += 1;
+                    contadorFitxesRivalsAmenaçants += 1;
                     int idx = t.getIndex(vei);
                     int tamRival = ds.getSize(idx);
                     
@@ -213,7 +214,7 @@ public class Heuristica {
                 
                 if (typeV != null) {
                     if (typeV != jo) {
-                        contadorFitxesRivals += 1;
+                        contadorFitxesRivalsAmenaçants += 1;
                         int idx = t.getIndex(vei);
                         int tamRival = ds.getSize(idx);
                         
@@ -250,20 +251,20 @@ public class Heuristica {
                     
                     if (typeV != null) {
                         if (typeV == jo) {
-                            bonus += 9;
+                            bonus += 15;
                             contadorFitxesMeves += 1;
                         }
                         else {
-                            bonus +=   25;
-                            contadorFitxesRivals += 1;
+                            bonus +=   15;
+                            contadorFitxesRivalsExteriors += 1;
                         }
                     } else bonus++;
                 }
             }
         }
         
-        if (contadorFitxesRivals == 0 && contadorFitxesMeves == 0) bonus += 50;
-        if (contadorFitxesRivals > 0 && contadorFitxesMeves == 0) bonus += 20;
+        if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) bonus += 30;
+        if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) bonus += 20;
 
         return bonus;
     }
