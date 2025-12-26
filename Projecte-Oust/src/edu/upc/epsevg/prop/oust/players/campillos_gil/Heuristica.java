@@ -73,11 +73,11 @@ public class Heuristica {
                     else valorPos -= 2;
                 } else if (esApertura){
                     if (distanciaX == 4 && distanciaY == 0){ // Volem cantonades estratègiques
-                        valorPos = 25;
+                        valorPos = 30;
                     } else if (distanciaX == 0 && distanciaY == 4){ // Volem cantonades estratègiques
-                        valorPos = 25;
+                        valorPos = 30;
                     } else if (distanciaX == 4 && distanciaY == 4){ // Volem cantonades estratègiques
-                        valorPos = 25;
+                        valorPos = 30;
                     } else if (distanciaX == 4 || distanciaY == 4){ // Volem borera
                         valorPos = 20;
                     } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
@@ -100,7 +100,6 @@ public class Heuristica {
                     score -= valorPos;
                     score -= evaluarAmenazaInminent(esApertura, t, ds, p, jo);
                 }
-
             }
         }
 
@@ -196,7 +195,7 @@ public class Heuristica {
                 if (typeV != null && typeV != jo) {
                     contadorFitxesRivalsAmenaçants += 1;
                     int idx = t.getIndex(vei);
-
+                    /* 
                     //  he fet canvissss aquiiiiiiiiiiiii
                     int rootRival = ds.find(idx);
 
@@ -206,8 +205,9 @@ public class Heuristica {
                         
                         tamanyPotencialRival += tamRival;
                         // finssssssssss aquiiiiiiiiiiii
-
+                    */
                         // Lògica N+2: Si el nou grup es més gran, capturo
+                        int tamRival = ds.getSize(idx);
                         if (miTamanyo != tamRival) {
                             bonus += (miTamanyo - tamRival) * 50; 
                         } else {
@@ -219,7 +219,7 @@ public class Heuristica {
                                 else bonus -= 35;
                             }
                         }
-                    }
+                    
                 } else if (typeV == jo){
                     contadorFitxesMevesProperes += 1;
                 }
@@ -307,12 +307,13 @@ public class Heuristica {
         //}
         bonus += casellesBuides * 3;
         
+        /* 
         int penalitzacioPerAlimentar = (int) (Math.pow(tamanyPotencialRival + 1, 3) * 10);
         if (jo == jugadorNostre) {
             bonus -= penalitzacioPerAlimentar;
         } else {
             bonus += penalitzacioPerAlimentar;
-        }
+        }*/
         /* 
         int i = p.y * t.getSize() + p.x;
         int gSize = ds.getSize(i);
