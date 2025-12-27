@@ -44,7 +44,7 @@ public class Game {
                 IPlayer player1 = new MOustValuablePlayer();
                 //IPlayer player2 = new HumanPlayer("Human2");
                 IPlayer player2 = new PlayerMiniMax(2);
-                //IPlayer player1 = new PlayerMiniMaxIDS();
+                //IPlayer player2 = new PlayerMiniMaxIDS();
                                 
                 
                 //---------------------------------------------

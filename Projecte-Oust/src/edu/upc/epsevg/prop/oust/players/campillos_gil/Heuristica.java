@@ -9,9 +9,13 @@ import java.awt.Point;
 import java.util.List;
 
 public class Heuristica {
-    public Heuristica() {
 
-    }
+    private static final int[][] dirsColindants = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}};
+    private static final int[][] dirsIntermig = {{0,-2}, {1,-1}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
+    private static final int[][] dirsExteriors = {{0,-3}, {2,-2}, {2,-1}, {3,0}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {0,3}, {-1,2}, {-2,1}, {-3,0}, {-3,-1}, {-3,-2}, {-3,-3}, {-2,-3}, {-1,-3}};
+
+
+    public Heuristica() { }
 
     public int evaluarEstat(GameStatusTunned t, PlayerType jo) {
 
@@ -110,70 +114,13 @@ public class Heuristica {
         return score;
     }
 
-    // --- FASE 2: COMBAT (Tàctica + Grups) ---
-    private int evaluarCombate(GameStatusTunned t, DisjointSet ds, PlayerType jo, PlayerType rival) {
-        double score = 0;
-        int size = t.getSquareSize();
-        int totalCells = size * size;
-
-        // EVALUACIÓ DE GRUPS EXISTENTS I D'AMENACES IMMEDIATES
-        for (int i = 0; i < totalCells; i++) {
-
-            Point p = getPointFromIndex(i, size); // Calc (x,y) a partir de l'índex
-            
-            if (!t.isInBounds(p)) continue; // Si esta fora del tauler, saltem
-
-            PlayerType owner = t.getColor(p); 
-            
-            // Iterem sobre el DisjointSet directament
-            if (ds.isRoot(i)) {
-                int gSize = ds.getSize(i);
-                if (gSize <= 0) continue; // Si no té fitxes, saltem
-                
-                if (owner != null) { //
-                    if (owner == jo) {
-                        score += Math.pow(gSize, 2.2) * 10; // Exponencial per valorar més els grups grans
-                    } else if (owner == rival) {
-                        score -= Math.pow(gSize, 2.2) * 12; // Penalitzem més els grups grans enemics
-                    }
-                }
-            }
-        
-            if (owner != null){
-                score += evaluarAmenazaInminent(false, t, ds, p, jo);
-            }
-        }
-        
-        return (int) score;
-    }
-
-    // --- HELPERS ---
-
-    private Point getPointFromIndex(int index, int cols) {
-        int y = index / cols; // Fila (Row)
-        int x = index % cols; // Columna (Col)
-        return new Point(x, y); // El constructor de Point es (x=col, y=row) habitualmente, o (r,c) según la API.
-        // Si Point se usa como (row, col) en tu API, sería new Point(y, x). 
-        // Revisa GameStatusTunned.getIndex: return p.y * cols + p.x; 
-        // Si p.y es fila (row) y p.x es columna (col), entonces:
-        // index / cols = p.y (fila)
-        // index % cols = p.x (columna)
-        // new Point(x, y) es lo estándar en AWT, pero verifica si tu GameStatus espera (r,c).
-        // Si falla, prueba new Point(y, x).
-    }
-
     private int evaluarAmenazaInminent(boolean esApertura, GameStatusTunned t, DisjointSet ds, Point p, PlayerType jugadorNostre) {
         
         int bonus = 0;
+        PlayerType jo = t.getColor(p);
         
         int index = t.getIndex(p);
         int miTamanyo = ds.getSize(index);
-
-        PlayerType jo = t.getColor(p);
-
-        // Veure possibles amenaces properes
-        int[][] dirsColindants = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}};
-        int[][] dirsIntermig = {{0,-2}, {1,-1}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
         
         int contadorFitxesRivalsAmenaçants = 0;
         int contadorFitxesRivalsExteriors = 0;
@@ -192,34 +139,22 @@ public class Heuristica {
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
                 
-                if (typeV != null && typeV != jo) {
+                if (typeV != null && typeV != jo) { // Evaluem casuistica vei (conlindant) que és fitxa rival del color que evaluem 
                     contadorFitxesRivalsAmenaçants += 1;
                     int idx = t.getIndex(vei);
-                    /* 
-                    //  he fet canvissss aquiiiiiiiiiiiii
-                    int rootRival = ds.find(idx);
-
-                    if(!grupsRivalsVists.contains(rootRival)){
-                        grupsRivalsVists.add(rootRival);
-                        int tamRival = ds.getSize(rootRival);
-                        
-                        tamanyPotencialRival += tamRival;
-                        // finssssssssss aquiiiiiiiiiiii
-                    */
-                        // Lògica N+2: Si el nou grup es més gran, capturo
-                        int tamRival = ds.getSize(idx);
-                        if (miTamanyo != tamRival) {
-                            bonus += (miTamanyo - tamRival) * 50; 
-                        } else {
-                            if (t.getCurrentPlayer()==jugadorNostre){
-                                if (jo == jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
-                                else bonus -= 35;
-                            } else {
-                                if (jo != jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
-                                else bonus -= 35;
-                            }
-                        }
                     
+                    int tamRival = ds.getSize(idx);
+                    if (miTamanyo != tamRival) {
+                        bonus += (miTamanyo - tamRival) * 500; 
+                    } else {
+                        if (t.getCurrentPlayer()==jugadorNostre){
+                            if (jo == jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
+                            else bonus -= 35;
+                        } else {
+                            if (jo != jugadorNostre) bonus += 35; // Ens poden matar el grup, tot i ser del mateix tamany
+                            else bonus -= 35;
+                        }
+                    }
                 } else if (typeV == jo){
                     contadorFitxesMevesProperes += 1;
                 }
@@ -241,13 +176,13 @@ public class Heuristica {
                         
                         // Lògica N+2: Si el nou grup es més gran, capturo
                         if (miTamanyo != tamRival) {
-                            bonus += (miTamanyo - tamRival) * 50; 
+                            bonus += (miTamanyo - tamRival) * 500; 
                         } else {
                             if (t.getCurrentPlayer() == jugadorNostre){
-                                if (jo == jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
+                                if (jo == jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
                                 else bonus -= 35;
                             } else {
-                                if (jo != jugadorNostre) bonus += 30; // Podem matar al grup, tot i ser del mateix tamany
+                                if (jo != jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
                                 else bonus -= 35;
                             }
                         }
@@ -262,8 +197,6 @@ public class Heuristica {
                 } else casellesBuides++;
             }
         }
-
-        int[][] dirsExteriors = {{0,-3}, {2,-2}, {2,-1}, {3,0}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {0,3}, {-1,2}, {-2,1}, {-3,0}, {-3,-1}, {-3,-2}, {-3,-3}, {-2,-3}, {-1,-3}};
 
         for (int[] d : dirsExteriors) {
         
@@ -282,29 +215,38 @@ public class Heuristica {
                         contadorFitxesMevesExteriors += 1;
                     }
                     else {
+                        
                         if (esApertura)
                             bonus += 10;
-                        else bonus += 10;
+                        else {
+                            int idx = t.getIndex(vei);
+                            int tamRival = ds.getSize(idx);
+                            if (miTamanyo != tamRival) {
+                                bonus += (miTamanyo - tamRival) * 250; 
+                            }
+                            bonus += 10;
+                        }
                         contadorFitxesRivalsExteriors += 1;
                     }
                 } //else casellesBuides++;
             }
         }
-        //if (esApertura) {
-            int contadorFitxesMeves = contadorFitxesMevesProperes + contadorFitxesMevesIntermig + contadorFitxesMevesExteriors;
+       
 
-            if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
-                bonus += 30;
-            } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
-                bonus += 20;
-            } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0){
-                bonus += contadorFitxesRivalsExteriors * 5;
-            }
-            if ((contadorFitxesMevesProperes > 0 || contadorFitxesMevesIntermig > 0 ) && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesRivalsExteriors > 0){
-                //malament tenir peça alla, la zona ja està defensada
-                bonus -= 30;
-            }   
-        //}
+        int contadorFitxesMeves = contadorFitxesMevesProperes + contadorFitxesMevesIntermig + contadorFitxesMevesExteriors;
+
+        if (contadorFitxesRivalsExteriors == 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
+            bonus += 30;
+        } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesMeves == 0) {
+            bonus += 20;
+        } else if (contadorFitxesRivalsExteriors > 0 && contadorFitxesRivalsAmenaçants == 0){
+            bonus += contadorFitxesRivalsExteriors * 5;
+        }
+        if ((contadorFitxesMevesProperes > 0 || contadorFitxesMevesIntermig > 0 ) && contadorFitxesRivalsAmenaçants == 0 && contadorFitxesRivalsExteriors > 0){
+            //malament tenir peça alla, la zona ja està defensada
+            bonus -= 30;
+        }   
+    
         bonus += casellesBuides * 3;
         
         /* 
@@ -319,9 +261,9 @@ public class Heuristica {
         int i = p.y * t.getSize() + p.x;
         int gSize = ds.getSize(i);
         if (jo==jugadorNostre) {
-            bonus += gSize * 1000; // Exponencial per valorar més els grups grans
+            bonus += gSize * gSize * 1000; // Exponencial per valorar més els grups grans
         } else if (jo != null) {
-            bonus += gSize * 1000; // Penalitzem més els grups grans enemics
+            bonus += gSize * gSize * 1000; // Penalitzem més els grups grans enemics
         }
         
         return bonus;
