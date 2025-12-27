@@ -25,7 +25,6 @@ public class Heuristica {
             return (winner == t.getCurrentPlayer()) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
         }
 
-        GameStatusTunned gst = (GameStatusTunned) t; // probablement no calgui AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         DisjointSet ds = t.getDS(); 
         
         int size = t.getSquareSize();
@@ -116,9 +115,6 @@ public class Heuristica {
             if (dif*dif != 1) score -= dif*dif*dif*75;
             score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * 55;
         }
-
-        
-        
         return score;
     }
 
@@ -137,8 +133,6 @@ public class Heuristica {
         int contadorFitxesMevesIntermig = 0;
         int contadorFitxesMevesExteriors = 0;
 
-        List<Integer> grupsRivalsVists = new java.util.ArrayList<>();
-        int tamanyPotencialRival = 0;
 
         for (int[] d : dirsColindants) {
             
