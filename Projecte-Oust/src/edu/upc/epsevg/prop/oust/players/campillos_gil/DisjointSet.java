@@ -9,6 +9,7 @@ public class DisjointSet {
     private int[] parent;          // Padre de cada nodo
     private int[] size;            // Tamaño del grupo
     public int numNodes;
+    public int puntuacio;
 
     /**
      * Constructor
@@ -19,6 +20,7 @@ public class DisjointSet {
         this.parent = new int[original.parent.length];
         this.size = new int[original.size.length]; // O rank, o el que tinguis
         this.numNodes = original.numNodes;
+        this.puntuacio = original.puntuacio;
         
         // La màgia de Java: còpia de memòria a memòria (molt ràpid)
         System.arraycopy(original.parent, 0, this.parent, 0, original.parent.length);
@@ -30,6 +32,7 @@ public class DisjointSet {
         parent = new int[totalNodes];
         size = new int[totalNodes];
         numNodes = 0;
+        puntuacio = 0;
         for (int i = 0; i < totalNodes; i++) {
             parent[i] = i;
             size[i] = 1;

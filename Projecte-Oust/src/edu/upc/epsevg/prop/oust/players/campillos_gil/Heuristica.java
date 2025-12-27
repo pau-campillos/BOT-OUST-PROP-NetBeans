@@ -104,8 +104,8 @@ public class Heuristica {
         }
 
         if (jo == PlayerType.PLAYER1)
-            score += t.diff()*100;
-        else score -= t.diff()*100;
+            score += t.diff()*500;
+        else score -= t.diff()*500;
         
         return score;
     }
@@ -314,15 +314,16 @@ public class Heuristica {
         } else {
             bonus += penalitzacioPerAlimentar;
         }*/
-        /* 
+
+
         int i = p.y * t.getSize() + p.x;
         int gSize = ds.getSize(i);
         if (jo==jugadorNostre) {
-            bonus += Math.pow(gSize, 2.2) * 20; // Exponencial per valorar més els grups grans
+            bonus += gSize * 1000; // Exponencial per valorar més els grups grans
         } else if (jo != null) {
-            bonus += Math.pow(gSize, 2.2) * 100; // Penalitzem més els grups grans enemics
+            bonus += gSize * 1000; // Penalitzem més els grups grans enemics
         }
-        */
+        
         return bonus;
     }
 }

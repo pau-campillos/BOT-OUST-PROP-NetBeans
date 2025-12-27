@@ -10,7 +10,7 @@ import edu.upc.epsevg.prop.oust.players.campillos_gil.DisjointSet;
  */
 public class GameStatusTunned extends GameStatus{
     
-    private DisjointSet ds;
+    public DisjointSet ds;
     private int rows;
     private int cols;
 
@@ -55,7 +55,21 @@ public class GameStatusTunned extends GameStatus{
         // les vostes cosetes...
     }
 
-    
+    public int esCaptura(Point p){
+        GameStatusTunned aux = new GameStatusTunned(this);
+        int difFitxes = diff();
+        ((GameStatus)aux).placeStone(p);
+        int difFitxesFinal = diff();
+        return difFitxes - difFitxesFinal ;
+    }
+
+    public int miniPuntuacio(Point p){
+        
+        GameStatusTunned aux = new GameStatusTunned(this);
+        aux.placeStone(p);
+        return aux.ds.puntuacio;
+    }
+
     private void conectarVeins(Point p, PlayerType myColor) {
         for (Dir d : Dir.values()) {
             //int nr = p.x + d.add(p).x;
@@ -65,7 +79,10 @@ public class GameStatusTunned extends GameStatus{
             Point veiP = d.add(p);
             if (this.isInBounds(veiP)) { 
                 if (this.getColor(veiP) == myColor) {
-                    ds.union(getIndex(p), getIndex(veiP));
+                    int index = getIndex(p);
+                    ds.union(index, getIndex(veiP));
+                    if (myColor == PlayerType.PLAYER1) ds.puntuacio += ds.getSize(index);
+                    else ds.puntuacio -= ds.getSize(index);
                 }
             }
         }

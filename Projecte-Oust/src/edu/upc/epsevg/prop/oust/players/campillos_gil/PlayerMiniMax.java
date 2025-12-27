@@ -67,7 +67,110 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         triaMillorMoviment(s2, profunditat);
         return moviment;
     }
-    
+
+    // Classe interna per guardar moviment + valor
+    private class ScoredMove implements Comparable<ScoredMove> {
+        Point p;
+        int score; // Puntuació del moviment (diff o heurística)
+        int secondaryScore; // Per desempatar (p.ex: disjoint set size)
+
+        public ScoredMove(Point p, int score, int secondaryScore) {
+            this.p = p;
+            this.score = score;
+            this.secondaryScore = secondaryScore;
+        }
+
+        @Override
+        public int compareTo(ScoredMove other) {
+            // Ordenem de major a menor (descendent)
+            int cmp = Integer.compare(other.score, this.score);
+            if (cmp == 0) {
+                return Integer.compare(other.secondaryScore, this.secondaryScore);
+            }
+            return cmp;
+        }
+    }
+
+    private void Ordena(GameStatusTunned t, List<Point> tiradesPossibles) {
+        List<ScoredMove> evaluatedMoves = new ArrayList<>();
+        PlayerType currentPlayer = t.getCurrentPlayer();
+        int currentDiff = t.diff(); // Calculem el diff base un cop
+
+        // 1. PRE-CÀLCUL: Iterem un cop per cada moviment possible
+        for (Point p : tiradesPossibles) {
+            GameStatusTunned aux = new GameStatusTunned(t); // Clonem 1 cop per moviment
+            aux.placeStone(p);
+            
+            int newDiff = aux.diff();
+            int diffChange = newDiff - currentDiff; // Quan ha canviat la diferència
+            
+            // Ajustem el signe perquè "més és millor" sempre per a l'ordenació
+            // Si sóc P1 (fitxes positives), vull que diff pugi (diffChange positiu).
+            // Si sóc P2 (fitxes negatives), vull que diff baixi (diffChange negatiu).
+            int primaryScore;
+            if (currentPlayer == PlayerType.PLAYER1) {
+                primaryScore = diffChange; // Busquem valors positius grans
+            } else {
+                primaryScore = -diffChange; // Busquem valors negatius grans (els convertim a positius per ordenar)
+            }
+
+            // Puntuació secundària (el teu ds.puntuacio) per desempatar
+            // Assumim que aux.getDS().puntuacio ja està calculat o és accessible
+            // Si no tens 'puntuacio' public al DS, usa aux.miniPuntuacio(p) o similar
+            // Aquí poso 0 per defecte si no tens accés directe, canvia-ho pel teu getter
+            int secondaryScore = 0; 
+            // secondaryScore = aux.getDS().puntuacio; (si fos accessible)
+
+            evaluatedMoves.add(new ScoredMove(p, primaryScore, secondaryScore));
+        }
+
+        // 2. ORDENACIÓ RÀPIDA: Només comparem enters
+        java.util.Collections.sort(evaluatedMoves);
+
+        // 3. RECONSTRUCCIÓ: Posem els punts ordenats a la llista original
+        tiradesPossibles.clear();
+        for (ScoredMove sm : evaluatedMoves) {
+            tiradesPossibles.add(sm.p);
+        }
+    }
+        
+    /*
+    private void Ordena (GameStatusTunned t, List<Point> tiradesPossibles){
+        tiradesPossibles.sort((p1, p2) -> {
+            GameStatusTunned aux = new GameStatusTunned(t);
+            int difFitxes = aux.diff();
+            aux.placeStone(p1);
+            int difFitxesFinal = aux.diff();
+            int v1 = difFitxes - difFitxesFinal; // Inicial - Final
+
+            GameStatusTunned aux2 = new GameStatusTunned(t);
+            int difFitxes2 = aux2.diff();
+            aux2.placeStone(p2);
+            int difFitxesFinal2 = aux2.diff();
+            int v2 = difFitxes2 - difFitxesFinal2;
+            if (v1!=v2){
+                if (t.getCurrentPlayer() == PlayerType.PLAYER1) {
+                    // P1: Millor captura = Valor més petit (negatiu). 
+                    // compare(v1, v2) posa el més petit primer.
+                    return Integer.compare(v1, v2); 
+                } else {
+                    // P2: Millor captura = Valor més gran (positiu).
+                    // compare(v2, v1) posa el més gran primer.
+                    return Integer.compare(v2, v1);
+                }
+            } else {
+                v1 = aux.ds.puntuacio;
+                v2 = aux2.ds.puntuacio;
+                if (t.getCurrentPlayer() == PlayerType.PLAYER1) {
+                    return Integer.compare(v2, v1); 
+                } else {
+                    return Integer.compare(v1, v2);
+                }
+            }
+            
+        });
+    }*/
+
     private void triaMillorMoviment(GameStatusTunned t, int depth) {
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
@@ -79,6 +182,41 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         List<Point> millorSequencia = new ArrayList<>();
         List<Point> tiradesPossibles = t.getMoves();
         jo = t.getCurrentPlayer(); // possible millora de nom a playerIni 
+        /*tiradesPossibles.sort((p1, p2) -> {
+            int v1 = t.esCaptura(p1); // Inicial - Final
+            int v2 = t.esCaptura(p2);
+            /*GameStatusTunned aux = new GameStatusTunned(t);
+            aux.placeStone(p2);
+            int v1 = evaluarEstat(t, jo);
+            GameStatusTunned aux2 = new GameStatusTunned(t);
+            aux2.placeStone(p2);
+            int v2 = evaluarEstat(aux2, jo);
+
+
+
+            if (v1!=v2){
+                if (t.getCurrentPlayer() == PlayerType.PLAYER1) {
+                    // P1: Millor captura = Valor més petit (negatiu). 
+                    // compare(v1, v2) posa el més petit primer.
+                    return Integer.compare(v1, v2); 
+                } else {
+                    // P2: Millor captura = Valor més gran (positiu).
+                    // compare(v2, v1) posa el més gran primer.
+                    return Integer.compare(v2, v1);
+                }
+            } else {
+                v1 = t.miniPuntuacio(p1);
+                v2 = t.miniPuntuacio(p2);
+                if (t.getCurrentPlayer() == PlayerType.PLAYER1) {
+                    return Integer.compare(v2, v1); 
+                } else {
+                    return Integer.compare(v1, v2);
+                }
+            }
+            
+        }); */
+
+        Ordena (t, tiradesPossibles);
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++){
             Point p = tiradesPossibles.get(i);
 
@@ -131,7 +269,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
 
         int valor = Integer.MIN_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
-        
+        Ordena(t, tiradesPossibles);
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
 
@@ -183,7 +321,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
 
         int valor = Integer.MAX_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
-        
+        Ordena (t, tiradesPossibles);
         for (int i = 0; !abortarMissio && i < tiradesPossibles.size(); i++) {
             Point p = tiradesPossibles.get(i);
 
