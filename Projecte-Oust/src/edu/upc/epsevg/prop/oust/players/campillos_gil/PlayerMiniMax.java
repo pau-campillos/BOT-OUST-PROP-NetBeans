@@ -222,10 +222,11 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
 
             GameStatusTunned t_nou = new GameStatusTunned(t);
             t_nou.placeStone(p);
-
+            
             // contenidor per a les jugades extres en cas de captura
             List<Point> movimentsExtres = new ArrayList<>();
             int candidat;
+            
             // lògica de captura: si el jugador actual és el mateix després de colocar la pedra, hi ha hagut captura
             if (t_nou.getCurrentPlayer() == player) candidat = Max_Valor(t_nou, movimentsExtres, depth, alpha, beta);
             else candidat = Min_Valor(t_nou, movimentsExtres, depth-1, alpha, beta);
@@ -233,6 +234,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
             if (abortarMissio) break;
 
             if (candidat > valor){
+                
                 valor = candidat;
                 millorSequencia.clear();
                 millorSequencia.add(p); // afegim la jugada actual
@@ -244,7 +246,6 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
             }
             alpha = Math.max(alpha, valor);
         }
-
         // guardem a la variable de classe el millor moviment trobat
         if (!abortarMissio) {
             moviment.getPoints().clear();
