@@ -1,7 +1,7 @@
-
-package edu.upc.epsevg.prop.oust;
-
+package edu.upc.epsevg.prop.oust.players.campillos_gil;
+import edu.upc.epsevg.prop.oust.*;
 import java.awt.Point;
+//import edu.upc.epsevg.prop.oust;
 import edu.upc.epsevg.prop.oust.players.campillos_gil.DisjointSet;
 
 /**
@@ -14,12 +14,20 @@ public class GameStatusTunned extends GameStatus{
     private int rows;
     private int cols;
 
-    // Constructor per començar de zero (root)
+    /**
+     * Constructor que crea una nova instància de GameStatusTunned a partir d'un GameStatus base.
+     * @param gs L'estat del joc original.
+     */
     public GameStatusTunned(GameStatus gs) {
         super(gs);
         inicialitzarDS(); 
     }
 
+    /**
+     * Constructor per còpia. Crea una nova instància duplicant l'estat i les estructures d'un altre GameStatusTunned.
+     * Serveix per simular moviments futurs sense modificar el tauler original.
+     * @param gs L'estat del joc que volem copiar.
+     */
     public GameStatusTunned(GameStatusTunned gs) {
         super(gs);
         if (gs.ds != null) {
@@ -30,52 +38,45 @@ public class GameStatusTunned extends GameStatus{
     }
 
     @Override
+    /**
+     * Realitza un moviment al tauler i actualitza l'estructura DisjointSet.
+     * Detecta si hi ha hagut captures per decidir si cal reconstruir tota l'estructura o només fer una actualització incremental.
+     * @param p Les coordenades on es vol posar la fitxa.
+     */
     public void placeStone(Point p) {
-
         int difFitxes = diff();
-
         super.placeStone(p); 
         int difFitxesFinal = diff();
         int diferencia = Math.abs(difFitxesFinal - difFitxes);
-        if (diferencia != 1) {
-            //HEM  MATAT; REVISAR DISJOINT-SET
-
-            // Com que 'super.placeStone' pot haver esborrat fitxes, 
-            // el DisjointSet antic ja no és vàlid (no suporta esborrats).
-            // Hem de regenerar-lo mirant com ha quedat el tauler.
+        if (diferencia != 1) { // hem matat 
             inicialitzarDS();
         } else {
-            // Només hem afegit una fitxa, podem actualitzar el DisjointSet
-            PlayerType jugadorTirada = this.getColor(p);
-
-            // Unim amb els veïns del mateix color
+            PlayerType jugadorTirada = this.getColor(p); // només hem afegit una fitxa així que actualitzem el DisjointSet
             conectarVeins(p, jugadorTirada);
         }
-        //...
-        // les vostes cosetes...
     }
 
+    /**
+     * Simula un moviment per calcular quantes fitxes es capturen o com canvia la puntuació.
+     * @param p La coordenada del moviment a avaluar.
+     * @return La diferència de punts que provoca aquest moviment (impacte de la jugada).
+     */
     public int esCaptura(Point p){
         GameStatusTunned aux = new GameStatusTunned(this);
         int difFitxes = diff();
         ((GameStatus)aux).placeStone(p);
-        int difFitxesFinal = diff();
+        int difFitxesFinal = aux.diff();
         return difFitxes - difFitxesFinal ;
     }
 
-    public int miniPuntuacio(Point p){
-        
-        GameStatusTunned aux = new GameStatusTunned(this);
-        aux.placeStone(p);
-        return aux.ds.puntuacio;
-    }
-
+    /**
+     * Uneix la fitxa de la posició donada amb els seus veïns del mateix color utilitzant el DisjointSet.
+     * Serveix per actualitzar la connectivitat i la puntuació de manera incremental, sense haver de reconstruir tota l'estructura.
+     * @param p La coordenada de la fitxa acabada de posar.
+     * @param myColor El color del jugador que ha realitzat el moviment.
+     */
     private void conectarVeins(Point p, PlayerType myColor) {
         for (Dir d : Dir.values()) {
-            //int nr = p.x + d.add(p).x;
-            //int nc = p.y + d.add(p).y;
-
-            // Verifiquem límits
             Point veiP = d.add(p);
             if (this.isInBounds(veiP)) { 
                 if (this.getColor(veiP) == myColor) {
@@ -89,34 +90,23 @@ public class GameStatusTunned extends GameStatus{
     }
 
     /**
-     * Aquest mètode llegeix tot el tauler actual i construeix 
-     * els grups des de zero.
+     * Aquest mètode llegeix tot el tauler actual i construeix els grups des de zero.
      */
     private void inicialitzarDS() {
         int size = this.getSquareSize();
-        // Assumim tauler quadrat per la matriu subjacent, o fem servir size*size
         int totalCells = size * size; 
-        
         this.ds = new DisjointSet(totalCells);
         this.rows = size;
         this.cols = size;
-
         // Recorrem tot el tauler per crear els grups
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-
                 
                 Point p = new Point(r,c);
-                
                 if (this.isInBounds(p) == false) continue;
-
                 PlayerType type = this.getColor(p);
-                
                 if (type != null) {
-                    
                     // Unim amb els veïns que ja hem visitat 
-                    // (per exemple, només cal mirar amunt i esquerra si recorrem en ordre, 
-                    // però en hexagonal és més segur mirar els veïns vàlids adjacents)
                     ds.numNodes++;
                     conectarVeins(p, type);
                 }
@@ -124,16 +114,22 @@ public class GameStatusTunned extends GameStatus{
         }
     }
 
-    // Mapeig de (Row, Col) a Index (0..N)
+    /**
+     * Transforma les coordenades 2D (x, y) en un índex lineal únic.
+     * Necessari per mapejar les caselles del tauler a l'array intern de l'estructura DisjointSet.
+     * @param p El punt o coordenada del tauler a convertir.
+     * @return Un enter que representa la posició dins l'array lineal (0..N).
+     */
     public int getIndex(Point p) {
         return p.y * this.cols + p.x;
     }
     
-    // Getter per a la teva heurística
+    /**
+     * Retorna l'estructura auxiliar DisjointSet associada a aquest estat.
+     * Útil per a l'avaluació heurística, permetent consultar la connectivitat de les peces sense haver de recalcular-la.
+     * @return L'objecte DisjointSet actual.
+     */
     public DisjointSet getDS() {
         return this.ds;
     }
-
-    // {Índice} =(fila * ancho_del_tablero) + (columna)
-    
 }

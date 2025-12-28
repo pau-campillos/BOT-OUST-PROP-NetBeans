@@ -5,29 +5,33 @@ import java.awt.Point;
 
 public class DisjointSet {
 
-    // Estructura Union-Find
-    private int[] parent;          // Padre de cada nodo
-    private int[] size;            // Tamaño del grupo
+    private int[] parent;          // Pare de cada node
+    private int[] size;            // Mida del grup
     public int numNodes;
     public int puntuacio;
 
     /**
-     * Constructor
-     * @param totalNodes Número total de casillas del tablero
+     * Constructor per còpia.
+     * Crea una rèplica exacta de l'estructura DisjointSet utilitzant còpia directa de memòria.
+     * És essencial per clonar estats ràpidament dins de l'algorisme Minimax sense afectar l'original.
+     * @param original L'estructura de DisjointSet que es vol duplicar.
      */
-
     public DisjointSet(DisjointSet original) {
         this.parent = new int[original.parent.length];
-        this.size = new int[original.size.length]; // O rank, o el que tinguis
+        this.size = new int[original.size.length];
         this.numNodes = original.numNodes;
         this.puntuacio = original.puntuacio;
         
-        // La màgia de Java: còpia de memòria a memòria (molt ràpid)
         System.arraycopy(original.parent, 0, this.parent, 0, original.parent.length);
         System.arraycopy(original.size, 0, this.size, 0, original.size.length);
-        // Copia altres atributs si en tens (numSets, etc.)
     }
 
+
+    /**
+     * Constructor principal. Inicialitza l'estructura DisjointSet per a un nombre determinat de nodes.
+     * Configura l'estat inicial on cada node és el seu propi pare i forma un conjunt de mida 1.
+     * @param totalNodes El nombre total d'elements (caselles del tauler).
+     */
     public DisjointSet(int totalNodes) {
         parent = new int[totalNodes];
         size = new int[totalNodes];
@@ -40,7 +44,9 @@ public class DisjointSet {
     }
      
     /**
-     * FIND con compresión de camino
+     * Troba el representant (arrel) del conjunt al qual pertany l'element 'i'.
+     * @param i L'índex de l'element que volem cercar.
+     * @return L'índex del node arrel que identifica el conjunt únic.
      */
     public int find(int i) {
         if (parent[i] != i) {
@@ -50,38 +56,32 @@ public class DisjointSet {
     }
 
     /**
-     * UNION por tamaño
+     * Fusiona els dos conjunts als quals pertanyen els elements 'i' i 'j'.
+     * @param i L'índex del primer element a unir.
+     * @param j L'índex del segon element a unir.
      */
     public void union(int i, int j) {
         int rootA = find(i);
         int rootB = find(j);
-
         if (rootA == rootB) return;
-
-        // Unimos el árbol pequeño al grande
+        // unim l'arbre petit al gran
         if (size[rootA] < size[rootB]) {
             int tmp = rootA;
             rootA = rootB;
             rootB = tmp;
         }
-
         parent[rootB] = rootA;
         size[rootA] += size[rootB];
     }
 
     /**
-     * Devuelve el tamaño del grupo al que pertenece i
+     * Retorna la mida (nombre d'elements) del conjunt al qual pertany l'element especificat.
+     * @param i L'índex de l'element que volem consultar.
+     * @return Un enter amb la quantitat total de nodes que formen aquest grup.
      */
     public int getSize(int i) {
         int root = find(i);
         return size[root];
-    }
-
-    /**
-     * Indica si i es raíz de grupo
-     */
-    public boolean isRoot(int i) {
-        return parent[i] == i;
     }
 }
 

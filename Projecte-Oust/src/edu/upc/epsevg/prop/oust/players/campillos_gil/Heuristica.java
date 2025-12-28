@@ -3,7 +3,7 @@ package edu.upc.epsevg.prop.oust.players.campillos_gil;
 
 import edu.upc.epsevg.prop.oust.Dir;
 import edu.upc.epsevg.prop.oust.GameStatus;
-import edu.upc.epsevg.prop.oust.GameStatusTunned;
+import edu.upc.epsevg.prop.oust.players.campillos_gil.GameStatusTunned;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -11,44 +11,38 @@ import java.util.List;
 
 public class Heuristica {
 
-    private static final int[][] dirsColindants = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}};
+    private static final int[][] dirsColindants = {{1,0}, {1,1}, {0,1}, {-1,0}, {-1,-1}, {0,-1}}; // posicions de les caselles del cercle més proper 
     private static final int[][] dirsIntermig = {{0,-2}, {1,-1}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {-1,1}, {-2,0}, {-2,-1}, {-2,-2}, {-1,-2}};
     private static final int[][] dirsExteriors = {{0,-3}, {2,-2}, {2,-1}, {3,0}, {3,1}, {3,2}, {3,3}, {2,3}, {1,3}, {0,3}, {-1,2}, {-2,1}, {-3,0}, {-3,-1}, {-3,-2}, {-3,-3}, {-2,-3}, {-1,-3}};
-
 
     public Heuristica() { }
 
     public int evaluarEstat(GameStatusTunned t, PlayerType jo) {
 
-        // 1. Fi del joc
+        // Comprovació per si s'ha acabat el joc
         if (t.isGameOver()) {
             PlayerType winner = t.GetWinner();
-            return (winner == t.getCurrentPlayer()) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+            return (winner == jo) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
         }
-
         DisjointSet ds = t.getDS(); 
-        
         int size = t.getSquareSize();
-        
-        // 2. Deteccióde Fase
+
+        // Detecció de Fase en la que estem
         int mida = t.getSize();
         boolean esApertura = ds.numNodes < mida * mida / 4;
         boolean esEndGame = ds.numNodes < mida * mida / 2;
 
-        //PlayerType jo = t.getCurrentPlayer();
-        // Calculem el rival
+        // Calculem qui és eñ rival
         PlayerType rival = (jo == PlayerType.PLAYER1) ? PlayerType.PLAYER2 : PlayerType.PLAYER1;
 
         if (esApertura) {
-            return evaluarApertura(true, esEndGame, t, jo, rival, ds);
+            return evaluarFase(true, esEndGame, t, jo, rival, ds);
         } else {
-         //   return evaluarCombate(t, ds, jo, rival);
-         return evaluarApertura(false, esEndGame, t, jo, rival, ds);
+            return evaluarFase(false, esEndGame, t, jo, rival, ds);
         }
     }
 
-    // --- FASE 1: APERTURA (Estratègia Posicional :) ) ---
-    private int evaluarApertura(boolean esApertura, boolean esEndGame, GameStatusTunned t, PlayerType jo, PlayerType rival, DisjointSet ds) {
+    private int evaluarFase(boolean esApertura, boolean esEndGame, GameStatusTunned t, PlayerType jo, PlayerType rival, DisjointSet ds) {
         int score = 0;
         int size = t.getSquareSize(); 
         int centre = size / 2;
@@ -56,22 +50,16 @@ public class Heuristica {
 
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
-
                 p.x = r; 
                 p.y = c;
-
                 if (!t.isInBounds(p)) continue; // Si esta fora del tauler, saltem
-
                 PlayerType celda = t.getColor(p);
-                
                 if (celda == null) continue; // Casella buida, no puntuem
 
                 // Calculem valor segons posició
                 int valorPos = 0; 
-                
                 int distanciaX = Math.abs(r - centre);
                 int distanciaY = Math.abs(c - centre);
-
                 if (distanciaX + distanciaY == t.getSize()-1) { // Penalitzem bordes
                     if (esApertura) valorPos -= 20;
                     else valorPos -= 5;
@@ -87,7 +75,7 @@ public class Heuristica {
                         valorPos = 30;
                     } else if (distanciaX == 4 || distanciaY == 4){ // Volem borera
                         valorPos = 20;
-                    } else if (distanciaX == 1 || distanciaY == 1){  // Cerquem el centreproperes al centre positiu
+                    } else if (distanciaX == 1 || distanciaY == 1){ // Volem caselles properes al centre
                         valorPos = 20;
                     } else if (distanciaX == 0 && distanciaY == 0){ // Volem el centre
                         valorPos = 22;
@@ -95,8 +83,6 @@ public class Heuristica {
                         valorPos = 15; // La resta adopten valors intermedis
                     }
                 }
-                
-                //HEM DE REVISAR LES CASELLES CONTIGUES. SI TENIM AMENAÇES, SERÀ DOLENT!!!!!!!!!!!
                 
                 // Assignem puntuació segons qui ocupa la casella
                 if (celda == jo) {
@@ -111,12 +97,16 @@ public class Heuristica {
         }
         int dif = t.diff();
         if (jo == PlayerType.PLAYER1){
-            score += dif*dif*dif*250;
-            score += ds.puntuacio * ds.puntuacio * ds.puntuacio * 20;
+            if (dif > 0) score += dif*dif*350;
+            else score -= dif*dif*50;
+            if (ds.puntuacio > 0) score += ds.puntuacio * ds.puntuacio * 20;
+            else score -= ds.puntuacio * ds.puntuacio * 20;
         }
         else {
-            score -= dif*dif*dif*250;
-            score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * 20;
+            if (dif < 0) score += dif*dif*350;
+            else score -= dif*dif*50;
+            if (ds.puntuacio < 0) score += ds.puntuacio * ds.puntuacio * 20;
+            else score -= ds.puntuacio * ds.puntuacio * 20;
         }
         return score;
     }
@@ -137,9 +127,12 @@ public class Heuristica {
         int contadorFitxesMevesExteriors = 0;
 
         List<Integer> veins = new ArrayList<>();
+        int perillveins=0;
+        Point vei = new Point();
         for (int[] d : dirsColindants) {
             
-            Point vei = new Point(p.x + d[0], p.y + d[1]);
+            vei.x = p.x + d[0];
+            vei.y = p.y + d[1];
             
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
@@ -156,7 +149,10 @@ public class Heuristica {
                             break;
                         }
                     }   
-                    if (nouVei) veins.add(ds.find(idx));
+                    if (nouVei) {
+                        veins.add(ds.find(idx));
+                        perillveins += ds.getSize(idx);
+                    }
 
                     int tamRival = ds.getSize(idx);
                     if (miTamanyo != tamRival) {
@@ -174,17 +170,21 @@ public class Heuristica {
                     contadorFitxesMevesProperes += 1;
 
                     if (esEndGame){
-                        bonus += miTamanyo * 5;
+                        bonus += miTamanyo * 7;
                     }
                 }
             }
         }
 
-        if (veins.size()!=1) bonus += veins.size()*300; // Estem permetent connectar
+        if (!esApertura && veins.size() > 1) bonus += veins.size()*perillveins; // Estem permetent connectar
+        
+        veins.clear();
+        perillveins = 0;
         
         for (int[] d : dirsIntermig) {
             
-            Point vei = new Point(p.x + d[0], p.y + d[1]);
+            vei.x = p.x + d[0];
+            vei.y = p.y + d[1];
             
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
@@ -196,6 +196,19 @@ public class Heuristica {
                     if (typeV != jo) {
                         contadorFitxesRivalsAmenaçants += 1;
                         
+                        boolean nouVei = true;
+                        for (int i=0; i<veins.size();i++){
+                            
+                            if (veins.get(i)==idx){
+                                nouVei = false;
+                                break;
+                            }
+                        }   
+                        if (nouVei) {
+                            veins.add(ds.find(idx));
+                            perillveins += ds.getSize(idx);
+                        }
+
                         // Lògica N+2: Si el nou grup es més gran, capturo
                         if (miTamanyo != tamVei) {
                             bonus += (miTamanyo - tamVei) * 75;
@@ -224,9 +237,12 @@ public class Heuristica {
             }
         }
 
+        if (!esApertura && veins.size() > 1) bonus += veins.size() * perillveins * 15;
+
         for (int[] d : dirsExteriors) {
         
-            Point vei = new Point(p.x + d[0], p.y + d[1]);
+            vei.x = p.x + d[0];
+            vei.y = p.y + d[1];
             
             if (t.isInBounds(vei)) {
                 PlayerType typeV = t.getColor(vei);
@@ -274,23 +290,6 @@ public class Heuristica {
             bonus -= 30;
         }   
         bonus += casellesBuides * 3;
-        
-        /* 
-        int penalitzacioPerAlimentar = (int) (Math.pow(tamanyPotencialRival + 1, 3) * 10);
-        if (jo == jugadorNostre) {
-            bonus -= penalitzacioPerAlimentar;
-        } else {
-            bonus += penalitzacioPerAlimentar;
-        }*/
-
-
-        //int i = p.y * t.getSize() + p.x;
-        //int gSize = ds.getSize(i);
-        //if (jo==jugadorNostre) {
-            //bonus += gSize * gSize * gSize * 100; // Exponencial per valorar més els grups grans
-        //} else if (jo != null) {
-            //bonus += gSize * gSize * gSize * 100; // Penalitzem més els grups grans enemics
-        //}
         return bonus;
     }
 }
