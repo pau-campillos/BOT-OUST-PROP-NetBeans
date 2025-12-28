@@ -64,7 +64,8 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
     @Override
     public PlayerMove move(GameStatus s1) {
         GameStatusTunned s2 = new GameStatusTunned(s1);
-        triaMillorMoviment(s2, profunditat);
+        double prof = (double)profunditat; //NO SE SI ES NECESARIIIIIIIIIIIIIIIIIIIII
+        triaMillorMoviment(s2, prof);
         return moviment;
     }
 
@@ -171,7 +172,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         });
     }*/
 
-    private void triaMillorMoviment(GameStatusTunned t, int depth) {
+    private void triaMillorMoviment(GameStatusTunned t, double depth) {
         int valor = Integer.MIN_VALUE;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
@@ -254,7 +255,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         }
     }
 
-    private int Max_Valor(GameStatusTunned t, List<Point> moviments, int depth, int alpha, int beta){
+    private int Max_Valor(GameStatusTunned t, List<Point> moviments, double depth, int alpha, int beta){
         if (abortarMissio) return 0;
         
         if (t.isGameOver()){
@@ -266,7 +267,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
             }
         }
         else if (t.getMoves().isEmpty()) return 0;
-        else if (depth == 0) return valorarEstat(t);
+        else if (depth <= 0) return valorarEstat(t);
 
         int valor = Integer.MIN_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
@@ -307,7 +308,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
         return valor;
     }
 
-    private int Min_Valor(GameStatusTunned t, List<Point> moviments, int depth, int alpha, int beta){
+    private int Min_Valor(GameStatusTunned t, List<Point> moviments, double depth, int alpha, int beta){
         if (abortarMissio) return 0;
         if (t.isGameOver()){
             PlayerType winner = t.GetWinner();
@@ -318,7 +319,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
             }
         }
         else if (t.getMoves().isEmpty()) return 0; 
-        else if (depth == 0) return valorarEstat(t);
+        else if (depth <= 0) return valorarEstat(t);
 
         int valor = Integer.MAX_VALUE;
         List<Point> tiradesPossibles = t.getMoves();
@@ -331,7 +332,7 @@ public class PlayerMiniMax extends Heuristica implements IPlayer, IAuto {
             
             int candidat;
             // lògica de captura: si el jugador actual és el mateix després de colocar la pedra, hi ha hagut captura
-            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Min_Valor(t_nou, moviments, depth, alpha, beta);
+            if (t_nou.getCurrentPlayer() == t.getCurrentPlayer()) candidat = Min_Valor(t_nou, moviments, depth-0.5, alpha, beta);
             else candidat = Max_Valor(t_nou, moviments, depth-1, alpha, beta);
             
             if (abortarMissio) return 0;

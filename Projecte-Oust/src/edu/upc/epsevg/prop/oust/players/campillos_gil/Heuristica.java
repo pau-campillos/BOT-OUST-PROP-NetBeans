@@ -6,6 +6,7 @@ import edu.upc.epsevg.prop.oust.GameStatus;
 import edu.upc.epsevg.prop.oust.GameStatusTunned;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Heuristica {
@@ -51,11 +52,13 @@ public class Heuristica {
         int score = 0;
         int size = t.getSquareSize(); 
         int centre = size / 2;
+        Point p = new Point(0, 0);
 
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
 
-                Point p = new Point(r, c);
+                p.x = r; 
+                p.y = c;
 
                 if (!t.isInBounds(p)) continue; // Si esta fora del tauler, saltem
 
@@ -109,11 +112,11 @@ public class Heuristica {
         int dif = t.diff();
         if (jo == PlayerType.PLAYER1){
             if (dif*dif != 1) score += dif*dif*dif*75;
-            score += ds.puntuacio * ds.puntuacio * ds.puntuacio * 55;
+            score += ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * 40;
         }
         else {
             if (dif*dif != 1) score -= dif*dif*dif*75;
-            score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * 55;
+            score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * 40;
         }
         return score;
     }
@@ -133,7 +136,7 @@ public class Heuristica {
         int contadorFitxesMevesIntermig = 0;
         int contadorFitxesMevesExteriors = 0;
 
-
+        List<Integer> veins = new ArrayList<>();
         for (int[] d : dirsColindants) {
             
             Point vei = new Point(p.x + d[0], p.y + d[1]);
@@ -142,19 +145,29 @@ public class Heuristica {
                 PlayerType typeV = t.getColor(vei);
                 
                 if (typeV != null && typeV != jo) { // Evaluem casuistica vei (conlindant) que és fitxa rival del color que evaluem 
+                    
                     contadorFitxesRivalsAmenaçants += 1;
                     int idx = t.getIndex(vei);
-                    
+                    boolean nouVei = true;
+                    for (int i=0; i<veins.size();i++){
+                        
+                        if (veins.get(i)==idx){
+                            nouVei = false;
+                            break;
+                        }
+                    }   
+                    if (nouVei) veins.add(ds.find(idx));
+
                     int tamRival = ds.getSize(idx);
                     if (miTamanyo != tamRival) {
-                        bonus += (miTamanyo - tamRival) * 50; 
+                        bonus += (miTamanyo - tamRival) * 75; 
                     } else {
                         if (t.getCurrentPlayer()==jugadorNostre){
-                            if (jo == jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
-                            else bonus -= 35;
+                            if (jo == jugadorNostre) bonus += 50; // Podem matar al grup, tot i ser del mateix tamany
+                            else bonus -= 50;
                         } else {
-                            if (jo != jugadorNostre) bonus += 35; // Ens poden matar el grup, tot i ser del mateix tamany
-                            else bonus -= 35;
+                            if (jo != jugadorNostre) bonus += 150; // Ens poden matar el grup, tot i ser del mateix tamany
+                            else bonus -= 150;
                         }
                     }
                 } else if (typeV == jo){
@@ -166,6 +179,8 @@ public class Heuristica {
                 }
             }
         }
+
+        if (veins.size()!=1) bonus += veins.size()*300; // Estem permetent connectar
         
         for (int[] d : dirsIntermig) {
             
@@ -183,15 +198,15 @@ public class Heuristica {
                         
                         // Lògica N+2: Si el nou grup es més gran, capturo
                         if (miTamanyo != tamVei) {
-                            bonus += (miTamanyo - tamVei) * 50;
+                            bonus += (miTamanyo - tamVei) * 75;
                         } else {
-                            /*if (t.getCurrentPlayer() == jugadorNostre){
+                            if (t.getCurrentPlayer() == jugadorNostre){
                                 if (jo == jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
                                 else bonus -= 35;
                             } else {
-                                if (jo != jugadorNostre) bonus += 35; // Podem matar al grup, tot i ser del mateix tamany
-                                else bonus -= 35;
-                            }*/
+                                if (jo != jugadorNostre) bonus += 200; // Podem matar al grup, tot i ser del mateix tamany
+                                else bonus -= 200;
+                            }
                         }
                     } else {
                         contadorFitxesMevesIntermig += 1;
