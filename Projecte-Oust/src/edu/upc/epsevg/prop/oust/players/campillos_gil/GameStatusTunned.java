@@ -5,8 +5,7 @@ import java.awt.Point;
 import edu.upc.epsevg.prop.oust.players.campillos_gil.DisjointSet;
 
 /**
- *
- * @author Usuari
+ * @author Pau i Lidia
  */
 public class GameStatusTunned extends GameStatus{
     

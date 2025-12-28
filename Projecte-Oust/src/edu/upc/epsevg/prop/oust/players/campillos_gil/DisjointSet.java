@@ -3,10 +3,13 @@ package edu.upc.epsevg.prop.oust.players.campillos_gil;
 import edu.upc.epsevg.prop.oust.PlayerType;
 import java.awt.Point;
 
+/**
+ * @author Pau i Lidia
+ */
 public class DisjointSet {
 
-    private int[] parent;          // Pare de cada node
-    private int[] size;            // Mida del grup
+    private int[] parent; // Pare de cada node
+    private int[] size;   // Mida del grup
     public int numNodes;
     public int puntuacio;
 
@@ -25,7 +28,6 @@ public class DisjointSet {
         System.arraycopy(original.parent, 0, this.parent, 0, original.parent.length);
         System.arraycopy(original.size, 0, this.size, 0, original.size.length);
     }
-
 
     /**
      * Constructor principal. Inicialitza l'estructura DisjointSet per a un nombre determinat de nodes.

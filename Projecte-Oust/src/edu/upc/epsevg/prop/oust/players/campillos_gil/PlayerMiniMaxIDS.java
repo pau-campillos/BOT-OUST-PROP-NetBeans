@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Jugador proposat amb MiniMax
+ * Jugador proposat amb MiniMaxIDS
  * @author Pau i Lidia
  */
 public class PlayerMiniMaxIDS implements IPlayer, IAuto {
