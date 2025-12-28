@@ -111,12 +111,12 @@ public class Heuristica {
         }
         int dif = t.diff();
         if (jo == PlayerType.PLAYER1){
-            if (dif*dif != 1) score += dif*dif*dif*75;
-            score += ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * 40;
+            score += dif*dif*dif*250;
+            score += ds.puntuacio * ds.puntuacio * ds.puntuacio * 20;
         }
         else {
-            if (dif*dif != 1) score -= dif*dif*dif*75;
-            score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * ds.puntuacio * 40;
+            score -= dif*dif*dif*250;
+            score -= ds.puntuacio * ds.puntuacio * ds.puntuacio * 20;
         }
         return score;
     }
